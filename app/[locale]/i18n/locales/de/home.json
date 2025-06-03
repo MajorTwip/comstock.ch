@@ -1,0 +1,30 @@
+{
+  "greeting": "Letzte Beiträge",
+  "description": "Ein Blog, um eine Vielzahl meiner Projekte zu sammeln und zu teilen",
+  "more": "Weiterlesen",
+  "all": "Alle Artikel",
+
+  "moreaboutme": "Mehr über mich",
+
+  "featured": "Besonders",
+  "morefeatured": "Mehr hervorgehobene Artikel",
+  "morerecent": "Mehr aktuelle Artikel",
+
+  "search": "Suche",
+  "searchposts": "Beiträge suchen",
+  "comment": "Kommentare laden",
+  "pub": "Veröffentlicht am",
+  "authors": "Autoren",
+  "name": "Name",
+  "nexta": "Nächster Artikel",
+  "preva": "Vorheriger Artikel",
+  "nextp": "Nächster",
+  "prevp": "Vorheriger",
+  "of": "von",
+  "back": "Zurück zum Blog",
+  "twitter": "Auf Twitter diskutieren",
+  "github": "Auf GitHub ansehen",
+  "draft": "In Arbeit",
+  "noposts": "Keine Artikel gefunden",
+  "poststagged": "Hervorgehobene Beiträge"
+}
