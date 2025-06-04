@@ -1,0 +1,63 @@
+---
+title: "Autoset Softlimits after Homing in Mach 4"
+date: "2020-07-22"
+authors: ["MajorTwip"]
+language: en
+images: ['/static/images/blog/autoendmach4/image.png']
+tags: 
+    - "cnc"
+    - "mach4"
+    - "scripts"
+summary: 'If softlimits are defined in Mach4, they have to be reactivated every time. But this could be done automatically after homing... Here’s how.'
+---
+
+If softlimits are defined in Mach4, they have to be reactivated every time. But this could be done automatically after homing... Here’s how.
+
+The instructions come directly from the Mach4 video.
+
+You need to modify the file that defines the functions of the controls in your Mach4 screen.
+
+The script is a bit hidden: In Mach, go to Operator / Edit Screen.
+
+![](/static/images/blog/autoendmach4/image.png)
+
+Then, in the tree on the left, select the topmost element.
+
+![](/static/images/blog/autoendmach4/image-1.png)
+
+Under Properties, select Load Script and then open it using the three dots on the right.
+
+![](/static/images/blog/autoendmach4/image-2.png)
+
+The function RefAllHome() already exists there and must be overwritten (the only change is the call to the SetSoftlimits() function). The SetSoftlimits() function is new and can be copied as is without modification. Then simply save and, to be safe, restart Mach.
+
+To find RefAllHome(), you can search with Ctrl+F.
+
+```
+---------------------------------------------------------------
+-- Ref All Home() function.
+---------------------------------------------------------------
+function RefAllHome()
+    mc.mcAxisDerefAll(inst)  --Just to turn off all ref leds
+    mc.mcAxisHomeAll(inst)
+    coroutine.yield() --yield coroutine so we can do the following after motion stops
+    ----See ref all home button and plc script for coroutine.create and coroutine.resume
+    wx.wxMessageBox('Referencing is complete.\nSoft Limits Set.')
+    SetSoftlimits()
+end
+
+-------------------------------------------------------
+-- Set Soft Limits
+-------------------------------------------------------
+function SetSoftlimits()
+    for v = 0, 5, 1 do --start, end, increment
+        mc.mcSoftLimitSetState(inst, v, mc.MC_ON)
+        
+    end
+    scr.SetProperty("tbtnSoftLimits", "Button State", tostring(1))
+    scr.SetProperty("tbSoftLimits", "Button State", tostring(1))
+    
+end
+```
+A video of this is available on YouTube:
+https://www.youtube.com/watch?v=IXuuGRACU1I
