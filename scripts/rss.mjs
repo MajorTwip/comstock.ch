@@ -43,7 +43,11 @@ async function generateRSS(config, allBlogs, locale, page = 'feed.xml') {
 
   // RSS for blog posts
   if (publishPosts.length > 0) {
-    const rss = generateRss(config, publishPosts.sort((a, b) => compareDesc(new Date(a.date), new Date(b.date))), locale)
+    const rss = generateRss(
+      config,
+      publishPosts.sort((a, b) => compareDesc(new Date(a.date), new Date(b.date))),
+      locale
+    )
     const directoryPath = path.join('public', locale)
     mkdirSync(directoryPath, { recursive: true }) // Create the directory if it doesn't exist
     writeFileSync(path.join(directoryPath, page), rss)
@@ -55,7 +59,12 @@ async function generateRSS(config, allBlogs, locale, page = 'feed.xml') {
       post.tags.map((t) => slug(t)).includes(tag)
     )
     if (filteredTagPosts.length > 0) {
-      const rss = generateRss(config, filteredTagPosts.sort((a, b) => compareDesc(new Date(a.date), new Date(b.date))), locale, `tags/${tag}/${page}`)
+      const rss = generateRss(
+        config,
+        filteredTagPosts.sort((a, b) => compareDesc(new Date(a.date), new Date(b.date))),
+        locale,
+        `tags/${tag}/${page}`
+      )
       const rssPath = path.join('public', locale, 'tags', tag)
       mkdirSync(rssPath, { recursive: true }) // Create the directory if it doesn't exist
       writeFileSync(path.join(rssPath, page), rss)

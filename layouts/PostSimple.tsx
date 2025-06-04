@@ -11,7 +11,6 @@ import { PostSeriesBox } from '@/components/seriescard'
 import Share from '@/components/share'
 import { format, parseISO } from 'date-fns'
 
-
 interface PostSimpleProps {
   content: Blog
   children: ReactNode

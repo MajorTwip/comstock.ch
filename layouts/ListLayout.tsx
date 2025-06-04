@@ -126,7 +126,9 @@ export default function ListLayoutWithTags({ params: { locale }, posts, title }:
                         <dl>
                           <dt className="sr-only">{t('pub')}</dt>
                           <dd className="text-base font-medium leading-6 text-gray-500 dark:text-gray-400">
-                            <time dateTime={date}>{format(parseISO(post.date), 'LLLL d, yyyy')}</time>
+                            <time dateTime={date}>
+                              {format(parseISO(post.date), 'LLLL d, yyyy')}
+                            </time>
                           </dd>
                         </dl>
                         <div className="space-y-3">

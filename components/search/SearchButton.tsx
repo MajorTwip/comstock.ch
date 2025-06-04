@@ -3,8 +3,7 @@ import siteMetadata from '@/data/siteMetadata'
 import { SearchIcon } from './icons'
 
 const SearchButton = () => {
-  if (
-    siteMetadata.search) {
+  if (siteMetadata.search) {
     const SearchButtonWrapper = KBarButton
 
     return (

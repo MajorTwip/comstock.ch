@@ -14,7 +14,6 @@ import { LocaleTypes } from 'app/[locale]/i18n/settings'
 import { compareDesc } from 'date-fns'
 import { getMDXComponent } from 'next-contentlayer2/hooks'
 
-
 interface PageProps {
   params: Promise<{
     slug: string[]
@@ -76,7 +75,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata 
     const authorResults = allAuthors
       .filter((a) => a.language === locale)
       .find((a) => a.slug.includes(author))
-    return (authorResults as Authors)
+    return authorResults as Authors
   })
   const publishedAt = new Date(post.date).toISOString()
   const modifiedAt = new Date(post.lastmod || post.date).toISOString()
@@ -124,9 +123,9 @@ export default async function Page({ params }: PageProps) {
   const { slug, locale } = await params
   const dslug = decodeURI(slug.join('/'))
 
-  const sortedCoreContents = (
-    allBlogs.sort((a, b) => compareDesc(new Date(a.date), new Date(b.date))).filter((p) => p.language === locale)
-  )
+  const sortedCoreContents = allBlogs
+    .sort((a, b) => compareDesc(new Date(a.date), new Date(b.date)))
+    .filter((p) => p.language === locale)
   const postIndex = sortedCoreContents.findIndex((p) => p.slug === dslug)
   if (postIndex === -1) {
     return notFound()
@@ -141,9 +140,9 @@ export default async function Page({ params }: PageProps) {
     const authorResults = allAuthors
       .filter((a) => a.language === locale)
       .find((a) => a.slug.includes(author))
-    return (authorResults as Authors)
+    return authorResults as Authors
   })
-  const mainContent = (post)
+  const mainContent = post
   const jsonLd = post.structuredData
   jsonLd['author'] = authorDetails.map((author) => {
     return {
@@ -155,7 +154,6 @@ export default async function Page({ params }: PageProps) {
   const Layout = layouts[post.layout || defaultLayout]
 
   const MDXContent = getMDXComponent(post.body.code)
-
 
   return (
     <>
@@ -170,7 +168,7 @@ export default async function Page({ params }: PageProps) {
         prev={prev}
         params={{ locale }}
       >
-        <MDXContent components={components}/>
+        <MDXContent components={components} />
       </Layout>
     </>
   )

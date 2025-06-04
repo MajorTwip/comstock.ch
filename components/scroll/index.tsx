@@ -28,8 +28,6 @@ const ScrollTopAndComment = () => {
   const handleScrollToComment = () => {
     document.getElementById('comment')?.scrollIntoView()
   }
-
-
 }
 
 export default ScrollTopAndComment

@@ -37,13 +37,13 @@ export default async function Page({ params }: PageProps) {
   if (authorIndex === -1) {
     return notFound()
   }
-  const mainContent = (author)
+  const mainContent = author
 
   const MDXContent = getMDXComponent(author.body.code)
-  
+
   return (
     <AuthorLayout params={{ locale }} content={mainContent}>
-        <MDXContent/>
+      <MDXContent />
     </AuthorLayout>
   )
 }
