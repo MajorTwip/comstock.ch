@@ -4,6 +4,7 @@ import CustomLink from './Link'
 import TableWrapper from './TableWrapper'
 import Audioplayer from './Audioplayer'
 import WebsiteEmbed from './WebsiteEmbed'
+import Gallery from './Gallery'
 
 export const components: MDXComponents = {
   Image,
@@ -11,4 +12,5 @@ export const components: MDXComponents = {
   table: TableWrapper,
   Audioplayer,
   WebsiteEmbed,
+  Gallery,
 }
