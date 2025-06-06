@@ -1,0 +1,32 @@
+---
+title: "WordPress behind Microsoft Web App Proxy with TLS/HTTPS"
+date: "2020-07-24"
+tags: 
+  - "IT"
+authors: ["MajorTwip"]
+language: en
+images: ['/static/images/blog/wordpress-hinter-microsoft-web-app-proxy-mit-tls-https/Capture.png']
+summary: "When a reverse proxy is used, it typically also handles the encryption/decryption of HTTPS-HTTP. This means that WordPress, in my case the Docker image, is accessed via HTTP and consequently returns all links via HTTP."
+---
+
+When a reverse proxy is used, it typically also handles the encryption/decryption of HTTPS-HTTP. This means that WordPress, in my case the Docker image, is accessed via HTTP and consequently returns all links via HTTP.
+
+At least in the current Docker image, this is already taken into account; normally, reverse proxies set the HTTP header X-FORWARDED-PROTO to "https", and thus WP is made to output the links (also to CSS and images, etc.) as "https://" through the following code snippet from wp-config.php.
+
+
+```
+if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+	$_SERVER['HTTPS'] = 'on';
+}
+```
+
+**BUT...**
+
+Microsoft likes to do everything differently. In their defense, it must be said that X-FORWARDED_PROTO and similar headers are not really standardized. However, Microsoft sets the header "Front-End-Https" to "on" in WebAppProxy. So let's use that. Following is a bit of code that I inserted into wp-config.php just before the "Stop edit here" line:
+
+
+```
+if (!empty($_SERVER['HTTP_FRONT_END_HTTPS']) && $_SERVER['HTTP_FRONT_END_HTTPS'] === 'on') {
+	$_SERVER['HTTPS'] = 'on';
+}
+```

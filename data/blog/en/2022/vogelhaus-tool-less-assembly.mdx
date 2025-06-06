@@ -1,0 +1,66 @@
+---
+title: "Birdshouse for tool-less assembly"
+date: "2022-03-31"
+tags: 
+  - "cnc"
+  - "fusion360"
+  - "paintjob"
+  - "woodwork"
+authors: ["MajorTwip"]
+language: en
+images: ['/static/images/blog/vogelhaus-tool-less-assembly/20211130_204625-scaled.jpg']
+summary: "For Christmas, we like to give handcrafted gifts made by our children to their godparents. In spring 2021, both were fascinated by the birds on our terrace, and they always enjoy painting. That's when the idea emerged to mill birdhouse kits with the CNC, which the children could then paint."
+---
+
+For Christmas, we like to give handcrafted gifts made by our children to their godparents. In spring 2021, both were fascinated by the birds on our terrace, and they always enjoy painting. That's when the idea emerged to mill birdhouse kits with the CNC, which the children could then paint.
+
+## 1. Prototype with Cardboard and Scissors
+
+I had set my mind on creating a box that could be assembled without tools and held together exclusively through interlocking edges and its own weight. To test the concept, I cut a prototype from cardboard.
+
+![Cardboard prototype](/static/images/blog/vogelhaus-tool-less-assembly/IMG_20210411_145535_255-1024x1024.jpg)
+
+## 2. Prototype in Fusion 360
+
+I designed the second prototype in Autodesk Fusion 360. For this, I used dimensions for a small native bird according to the [Vogelwarte Sempach](https://www.vogelwarte.ch/de/voegel/ratgeber/nisthilfen/nistkaesten-fuer-hoehlenbrueter) (Swiss Ornithological Institute).
+
+This second prototype was then milled on the CNC Mk3. For this, I used the [Milling Set 3 from Uncle Phil](https://www.sorotec.de/shop/Uncle-Phil-approved-Fraeserset-3-PRO.html).
+
+## Findings and 3rd Prototype
+
+I gained the following insights from the milled prototype:
+
+- The concept works
+- The slots are rounded and the rectangular tenons don't fit --> Dogbones must be used.
+- Slow due to multiple passes with both roughing and finishing passes. The Mk3 can do more!
+- Too large for standard size of raw material (500x500mm) --> shrink
+
+![Wood prototype](/static/images/blog/vogelhaus-tool-less-assembly/20210927_162538-478x1024.jpg)
+
+## 3rd Prototype
+
+- The slots are too tight. My raw material, weatherproof plywood, is not 5mm as expected but 5.5mm
+- Tabs too small, breaks apart during milling
+
+## 4th Prototype
+
+- More feed, faster, more aggressive!! The Mk3 can do more!
+
+## 5th Prototype, Mass Production
+
+The program still takes just under 20 minutes. 3 houses per hour! Works out for me.
+
+## Painting
+
+At first, I wanted to let the children paint on the milled plates with all kinds of coloring pencils and brushes. However, this was too slow, and after at most one house each, they lost interest. The solution was marbling. For this, I found both a marbling set and a suitable container at Coop. Caution, washing hands with soap won't be enough...
+
+<Gallery slides = {[
+  { src: "/static/images/blog/vogelhaus-tool-less-assembly/IMG_20210411_145535_255-1024x1024.jpg", width: 1024, height: 478 },
+  { src: "/static/images/blog/vogelhaus-tool-less-assembly/20210502_115141-983x1024.jpg", width: 1024, height: 478 },
+  { src: "/static/images/blog/vogelhaus-tool-less-assembly/20210927_153505-1024x478.jpg", width: 1024, height: 478 },
+  { src: "/static/images/blog/vogelhaus-tool-less-assembly/20210927_162538-478x1024.jpg", width: 1024, height: 478 },
+  { src: "/static/images/blog/vogelhaus-tool-less-assembly/20211128_092559-1024x478.jpg", width: 1024, height: 478 },
+  { src: "/static/images/blog/vogelhaus-tool-less-assembly/20211130_204610-1024x478.jpg", width: 1024, height: 478 },
+  { src: "/static/images/blog/vogelhaus-tool-less-assembly/20211130_204625-1024x478.jpg", width: 1024, height: 478 },
+  
+]} />

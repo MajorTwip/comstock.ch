@@ -1,0 +1,83 @@
+---
+title: "Garage Door Opener"
+date: "2020-07-26"
+tags: 
+  - "electronics"
+  - "homeautomation"
+authors: ["MajorTwip"]
+language: en
+images: ['/static/images/blog/garagentoroffner/20200726_220902-1024x576.jpg']
+summary: "To be able to open both garage doors via OpenHAB, I use a 2-relay board with an ESP01 on it."
+---
+To be able to open both garage doors via OpenHAB, I use a 2-relay board with an ESP01 on it.
+
+![](/static/images/blog/garagentoroffner/20200726_220902-1024x576.jpg)
+
+Here is the sketch I used. I work with the Homie-esp8266 library, as the MQTT binding in OpenHAB supports the Homie convention.
+
+[gist](https://gist.github.com/MajorTwip/6d63c5c6ff859d1c4732d53b33fdd42a)
+
+```
+#include <Homie.h>
+#include <Arduino.h>
+
+#define FW_VERSION "0.0.3"
+
+const byte SET1[] {0xA0,0x01,0x01,0xA2,0x0D,0x0A};
+const byte RESET1[] {0xA0,0x01,0x00,0xA1,0x0D,0x0A};
+const byte SET2[] {0xA0,0x02,0x01,0xA3,0x0D,0x0A};
+const byte RESET2[] {0xA0,0x02,0x00,0xA2,0x0D,0x0A};
+const unsigned long ACTIVE_TIME{500};
+unsigned long reset1 {0};
+unsigned long reset2 {0};
+
+HomieNode garageNode("garagedoors", "Garage", "switch");
+
+void loopHandler() {
+  
+}
+
+bool door1Handler(const HomieRange& range, const String& value){
+  Homie.getLogger() << "Door 1 triggered" <<endl;
+  Serial.write(SET1,6);
+  garageNode.setProperty("door1").send("on"); 
+  reset1 = millis() + ACTIVE_TIME;
+  return true;
+};
+
+bool door2Handler(const HomieRange& range, const String& value){
+  Homie.getLogger() << "Door 2 triggered" <<endl;
+  Serial.write(SET2,6);
+  garageNode.setProperty("door2").send("on"); 
+  reset2 = millis() + ACTIVE_TIME;
+  return true;
+};
+
+void setup() {
+  Serial.begin(115200); 
+  
+  Homie_setFirmware("csh_garagedoor",FW_VERSION);
+  Homie_setBrand("Comstock Homecontrol");
+  //Homie.setLoopFunction(loopHandler);
+  Homie.disableLedFeedback();
+  Homie.setup();
+
+  garageNode.advertise("door1").setName("Door L").setDatatype("boolean").settable(door1Handler);
+  garageNode.advertise("door2").setName("Door R").setDatatype("boolean").settable(door2Handler);
+}
+
+void loop(){
+    Homie.loop();
+    if(reset1!=0 && reset1<millis()){
+      Serial.write(RESET1,6);
+      garageNode.setProperty("door1").send("off");
+      reset1=0;
+    }
+
+    if(reset2!=0 && reset2<millis()){
+      Serial.write(RESET2,6);
+      garageNode.setProperty("door2").send("off");
+      reset2=0;
+    }
+}
+```

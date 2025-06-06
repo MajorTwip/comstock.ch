@@ -1,0 +1,72 @@
+---
+title: "Website Migration"
+date: "2025-06-06"
+authors: ["MajorTwip"]
+language: en
+tags: 
+  - "it"
+  - "react"
+images: ['/static/images/blog/website/init.png']
+summary: "For years, actually decades, I've maintained a website, primarily an overview of all my projects. I now want a new site. Reproducible, static, minimalist, simple."
+---
+
+## Initial Situation
+
+For years, actually decades, I've maintained a website, primarily an overview of all my projects. The first one was pure HTML with inline styles (no idea if CSS existed back then). Later a Drupal-based one and now for a long time a WordPress site.
+While I like the ability to easily create content anytime and anywhere, I have to update at least 2 plugins each time and dismiss what feels like a dozen prompts to subscribe to premium plans for Plugin X. So I wanted something new, something simple. I decided to switch to NextJS JAMStack and tried the TailwindCSS JAMStack Template, which more or less worked, but the build throws dozens of deprecation warnings and it doesn't seem to be actively developed anymore.
+
+## Goal
+
+I now want a new site. Reproducible, static, minimalist, simple.
+So no database but a JAMStack.
+It will be a learning project, so I want to learn the following tools:
+TypeScript (I only know JS)
+NextJS
+ESLint
+Contentlayer
+
+## Initialization
+
+My first goal is to get a simple static site based on md files.
+No styling, no tags/pages or even search function, no multilingualism.
+
+I start with initializing a basic nextJS site. For this, I follow the Getting-Started documentation of [Contentlayer2](https://github.com/timlrx/contentlayer2)
+
+```shell
+> npx create-next-app@latest comstock.ch
+Need to install the following packages:
+create-next-app@15.3.3
+Ok to proceed? (y)
+
+√ Would you like to use TypeScript? ... Yes
+√ Would you like to use ESLint? ... Yes
+√ Would you like to use Tailwind CSS? ... Yes
+√ Would you like your code inside a `src/` directory? ... No
+√ Would you like to use App Router? (recommended) ... Yes
+√ Would you like to use Turbopack for `next dev`? ... No
+√ Would you like to customize the import alias (`@/*` by default)? ... No
+Creating a new Next.js app in comstock.ch.
+
+> cd comstock.ch
+> npm install contentlayer2 next-contentlayer2 date-fns
+
+> code. //opens VSCode
+> npm run dev //starts the demo site at localhost:3000
+```
+
+I also adopted the [remaining adjustments](https://github.com/MajorTwip/comstock.ch/commit/30d91908bda22c4e6634d18422bbd443b45acb2b) according to the Getting Started guide. I had to make the following additional adjustments:
+
+I want all the data in the same folder, and since more document types will be added sooner or later, I put everything in a "data" directory from the start.
+Additionally, I had to [disable Turbopack](https://github.com/MajorTwip/comstock.ch/commit/f951bc12ba286df09171e3a271ea65779118920d) because it seems to conflict with Contentlayer.
+
+## Creation and Abandonment
+
+I copied the layout largely from the [Tailwind Blog Template](https://github.com/timlrx/tailwind-nextjs-starter-blog).
+However, this led to increasingly inconsistent behavior, so I eventually abandoned the migration. Especially because I would also have to implement the entire i18n part. Then I found the [multilingual Tailwind template](https://tailwind-nextjs-starter-blog-i18n.vercel.app/en/blog/release-of-tailwind-nextjs-starter-blog-v2.0) which was based on a library called Pliny created by the developer, which in turn was based on old modules.
+
+But I wanted to understand exactly what was happening. Otherwise, I could have just stayed with WordPress.
+
+So I deleted all dependencies from package.json as well as the entire package-lock.json.
+Then I simply ran ```npm run dev``` to see what errors were thrown, searched for the missing module, read the documentation, and then installed it. Except for pliny, I removed those references.
+
+[So here is a template without analytics, newsletter, comments](https://github.com/MajorTwip/tailwind-nextjs-starter-blog-i18n-unpliny)
