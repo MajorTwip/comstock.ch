@@ -24,6 +24,7 @@ import rehypePresetMinify from 'rehype-preset-minify'
 import siteMetadata from './data/siteMetadata'
 import { fallbackLng, secondLng } from './app/[locale]/i18n/locales'
 import { compareDesc } from 'date-fns'
+import remarkObsidian from './components/util/remark-obsidian'
 
 const root = process.cwd()
 const isProduction = process.env.NODE_ENV === 'production'
@@ -161,7 +162,7 @@ export const Authors = defineDocumentType(() => ({
   fields: {
     name: { type: 'string', required: true },
     language: { type: 'string', required: true },
-    default: {type: 'boolean'},
+    default: { type: 'boolean' },
     avatar: { type: 'string' },
     occupation: { type: 'string' },
     company: { type: 'string' },
@@ -176,6 +177,7 @@ export const Authors = defineDocumentType(() => ({
 
 export default makeSource({
   contentDirPath: 'data',
+  contentDirInclude: ['blog', 'authors'],
   documentTypes: [Blog, Authors],
   mdx: {
     cwd: process.cwd(),
@@ -183,6 +185,8 @@ export default makeSource({
       remarkGfm,
       remarkMath,
       remarkAlert,
+      [remarkObsidian, { imagesPath: '/static/images/blog/' }],
+
     ],
     rehypePlugins: [
       rehypeSlug,
