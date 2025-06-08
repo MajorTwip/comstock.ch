@@ -1,0 +1,60 @@
+---
+title: Fehlersuche WLAN
+date: 2025-06-08
+tags:
+  - IT
+  - infrastructure
+authors:
+  - MajorTwip
+language: de
+summary: Seit ein paar Monaten ist mein WLAN unglaublich langsam. Über WiFi habe ich Speed-Test Resultate die der Verbindung von vor 15 Jahren entspricht. Sogar YT hat Probleme. Wir sprechen von 5-10MBit/s über WLAN
+---
+
+## Eine Sinnlose Odyssee
+
+Seit ein paar Monaten ist mein WLAN unglaublich langsam.
+Über WiFi habe ich Speed-Test Resultate die der Verbindung von vor 15 Jahren entspricht. Sogar YT hat Probleme. Wir sprechen von 5-10MBit/s über WLAN
+
+Gemessen am RJ45-Port der Unify U7 In Wall mit VLAN10 aktiviert hab ich schön das GBit/s:
+
+```
+Connecting to host 10.87.20.245, port 5201
+[  5] local 10.87.10.59 port 46397 connected to 10.87.20.245 port 5201
+[ ID] Interval           Transfer     Bitrate
+[  5]   0.00-1.01   sec   111 MBytes   923 Mbits/sec
+[  5]   1.01-2.00   sec   112 MBytes   942 Mbits/sec
+[  5]   2.00-3.00   sec   112 MBytes   943 Mbits/sec
+[  5]   3.00-4.01   sec   112 MBytes   936 Mbits/sec
+[  5]   4.01-5.01   sec   110 MBytes   927 Mbits/sec
+[  5]   5.01-6.01   sec   111 MBytes   925 Mbits/sec
+[  5]   6.01-7.01   sec   112 MBytes   938 Mbits/sec
+[  5]   7.01-8.00   sec   109 MBytes   926 Mbits/sec
+[  5]   8.00-9.01   sec   114 MBytes   947 Mbits/sec
+[  5]   9.01-10.01  sec   113 MBytes   943 Mbits/sec
+- - - - - - - - - - - - - - - - - - - - - - - - -
+[ ID] Interval           Transfer     Bitrate
+[  5]   0.00-10.01  sec  1.09 GBytes   935 Mbits/sec                  sender
+[  5]   0.00-10.04  sec  1.09 GBytes   932 Mbits/sec                  receiver
+```
+
+Auch wenn ich am Notebook das VLAN Tag entferne und im Unifi Manager den Port als Acces Port für VLAN10 lege kriege ich die selben Werte.
+Scheint als würde Switching, Routing und Tagging sauber klappen. Also muss es doch die WiFi-Einstellung sein, oder?
+
+Danach versuchte ich den AP zu reseten uns als standalone-AP zu konfigurieren, am Uplink nur mein Notebook mit fixer IP und iperf3. Aber auch da nur 4-7MBit/s.
+
+Somit folgendes gefunden:
+
+- Am Routing/Switching liegt es vermutlich nicht, da ich am Anschluss des AP mit den selben Geräten Gbit-Durchsatz hab
+- Am VLAN liegt es nicht, alle SSID, ob getaggt oder nicht, waren gleich schnell
+- An den WIFI-Einstellungen liegt es nicht, da mit Factory-Werten die selben werte erreicht wurden.
+
+Es muss also ein Störsignal vorliegen. Die neue PV-Anlage? Aber Moment, im Keller hatte ich das selbe Phänomen.
+
+**Kurz vor dem Verzweifeln noch kurz das Smartphone rebooten... Zack 600MBit!!!**
+
+Ich habe nun zwei Thesen, habe aber kaum die Möglichkeit dies zu Prüfen:
+
+1. Der WIFI-Stack im Android hatte irgend ein Problem
+2. Das Netzwerk hat ein Problem aufgrund einer fehlerfahten MAC-Table und da Android die MAC variiert (gemäss meiner Einstellung) hat sich das Problem nun vorerst gelöst.
+
+Naja, es läuft jetzt. Der Wag dahin war aber eher unbefriedigend.
