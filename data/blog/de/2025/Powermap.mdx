@@ -1,0 +1,133 @@
+---
+title: Energieübersicht in Home Assistant mit draw.io
+date: 2025-06-15
+tags:
+  - IT
+  - hausautomatisierung
+  - homeassistant
+authors:
+  - MajorTwip
+language: de
+summary: Home Assistant hat eine sehr nützliche Übersichtsseite für die Energieflüsse. Es gibt eine Leistungsübersicht als Community-Plugin als Lovelace-Card. Diese ist für viele Setups geeignet, aber meines ist ein wenig komplexer.
+draft: false
+images: /static/images/blog/Powermap.png
+---
+## Übersicht 
+Home Assistant hat eine sehr nützliche Übersichtsseite für die Energieflüsse. Es gibt eine Leistungsübersicht als Community-Plugin als Lovelace-Card. Diese ist für viele Setups geeignet, aber meines ist ein wenig komplexer. Insbesondere meine Insel-Solaranlage konnte ich nicht zusätzlich zum Balkonkraftwerk darstellen. Somit habe ich kurzerhand ein Schema auf [draw.io](https://draw.io) gezeichnet.
+
+![[Power4.svg]]
+
+Dieses habe ich danach in Home Assistant importiert. Dazu nutze ich das [Floorplan Plugin](https://experiencelovelace.github.io/ha-floorplan/)
+
+## Details
+### draw.io
+#### ID im Element
+Um die verschiedenen Textfelder über HA ansteuern zu können, benötigen diese ein id-Parameter im Element. Dies geht mit draw.io nicht direkt, da beim SVG-Export ein extrem verschachteltes SVG-Konstrukt bastelt. Mehr dazu später. Aber immerhin hat draw.io Plugins namens "plugins/props.js" und "plugins/svgdata.js" welches über Extras --> Plugins aktiviert werden können.
+Danach kann man über Rechtsklick auf ein Symbol --> Edit Data --> Doppelklick auf die ID, diese geändert werden. In HA werde wir diese dann über "cell-ID_aus_draw.io" ansprechen.
+
+#### Textfelder werden ganzflächige ```<div>```
+Textfelder, genauer alle Rechteckigen Objekte aus der draw.io-Bibliothek beinhalten als SVG-Element zwei Unterelemente, wobei eines die gesammte Fläche bedeckt. Dies führt dazu, dass HA Floorplan die Klick-Flächen nicht sauber rendern kann. (auf der gesammten Map führt ein Click zum Anzeigen der History des zuletzt konfigurierten Objekts statt des effektiv angeklickten Elementes). Ein eigenes SVG mit einem ```<rect>``` zu erstellen führt zum gleichen Problem.
+Somit habe ich ein SVG gebastelt, welches das Rechteck als ```<path>``` zeichnet.
+```
+<svg version="1.0" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+	 viewBox="0 0 100 40" xml:space="preserve">
+	    <style>
+        path.icon {
+            stroke-width: 1;
+            stroke: black;
+			@media (prefers-color-scheme: dark) {stroke: white; }
+        }
+    </style>
+<path class="icon"  d="M 0 0 h 100 v 40 h -100 Z" fill-opacity="0" />
+</svg>
+```
+
+#### Darkmode
+Die Icons habe ich bei [SVG Repo](https://www.svgrepo.com/svg/2917/solar-panels-couple-in-sunlight) gefunden. Im Darkmode bleiben diese aber schwarz. Somit habe ich denen einfach den Style-Tag (siehe oben) eingefügt und dem Path danach diese class zugewiesen.
+
+### Home Assistant Floorplan
+Die nötigen Infos findet Ihr in der Doku von Floorplan. Einzig speziell ist die custom Function welche das unterste Element in dem extrem verschachtelten SVG-Export von draw.io sucht um dort den Text zu setzten. Durch die Rechtecke welche nun Paths sind wäre dies eigentlich nicht mehr nötig, da nun alle Elemente ein ```<text>``` haben.
+```
+views:
+  - title: Floorplan
+    path: floorplan
+    theme: Google Dark Theme
+    badges: []
+    cards:
+      - type: custom:floorplan-card
+        full_height: true
+        config:
+          image: /local/floorplan/Power5.svg
+          cache: false
+          console_log_level: info
+          defaults:
+            hover_action: hover-info
+            tap_action: more-info
+            state_action:
+              action: call-service
+              service: floorplan.class_set
+              service_data: default-${entity.state}
+          rules:
+            - element: cell-val_grid_total
+              entity: sensor.power_mains
+              state_action:
+                - service: floorplan.execute
+                  service_data: ${functions.setLowestElementsText(entity, element)};
+            - entity: sensor.ups_power
+              elements:
+                - cell-sw_island_bypass
+                - cell-sw_island_inv
+              state_action:
+                - service: floorplan.style_set
+                  service_data:
+                    element: cell-sw_island_bypass
+                    style: '${(entity.state > 5) ? "opacity:1" : "opacity:0"}'
+                - service: floorplan.style_set
+                  service_data:
+                    element: cell-sw_island_inv
+                    style: '${(entity.state > 5) ? "opacity:0" : "opacity:1"}'
+            - entity: binary_sensor.goe_223755_car_0
+              elements:
+                - cell-ico_car
+                - cell-val_car
+                - cell-line_car
+              state_action:
+                - service: floorplan.style_set
+                  service_data:
+                    style: >-
+                      ${(entity.state==="plugged in") ? "opacity:1" :
+                      "opacity:0"}
+          functions: |
+            >
+            return {
+              setLowestElementsText: (entity, element, precision = 0) => {
+                const valNum = parseFloat(entity.state).toFixed(precision)
+                const value = valNum + entity.attributes.unit_of_measurement
+
+                const leaf = element.querySelector("text")
+                if(leaf){
+                  leaf.textContent=value;
+                  return; 
+                }
+                
+                let lowestNode = null;
+                let maxDepth = -1;
+                
+                function traverse(node, depth) {
+                  if (depth > maxDepth) {
+                      maxDepth = depth;
+                      lowestNode = node;
+                  }
+                  for (let child of node.children) {
+                      traverse(child, depth + 1);
+                  }
+                }
+                
+                traverse(element, 0);
+                lowestNode.textContent=value;
+                return; 
+              },
+            };
+    type: panel
+
+```

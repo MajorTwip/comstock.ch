@@ -1,0 +1,134 @@
+---
+title: Energy Overview in Home Assistant with draw.io
+date: 2025-06-15
+tags:
+  - IT
+  - home automation
+  - homeassistant
+authors:
+  - MajorTwip
+language: en
+summary: Home Assistant has a very useful overview page for energy flows. There is a power overview as a community plugin for Lovelace Card. This is suitable for many setups, but mine is a bit more complex.
+draft: false
+images: /static/images/blog/Powermap.png
+---
+## Overview 
+Home Assistant has a very useful overview page for energy flows. There is a power overview as a community plugin for Lovelace Card. This is suitable for many setups, but mine is a bit more complex. In particular, I couldn't display my island solar system in addition to the balcony power plant. So I quickly drew a diagram on [draw.io](https://draw.io).
+
+![[Power4.svg]]
+
+I then imported this into Home Assistant. For this I use the [Floorplan Plugin](https://experiencelovelace.github.io/ha-floorplan/)
+
+## Details
+### draw.io
+#### ID in Element
+In order to be able to control the various text fields via HA, they need an id parameter in the element. This is not directly possible with draw.io, as it creates an extremely nested SVG construct during SVG export. More on that later. But at least draw.io has plugins called "plugins/props.js" and "plugins/svgdata.js" which can be activated via Extras --> Plugins.
+Afterwards, you can change the ID by right-clicking on a symbol --> Edit Data --> Double-click on the ID. In HA we will then address these via "cell-ID_from_draw.io".
+
+#### Text fields become full-surface ```<div>```
+Text fields, or more specifically all rectangular objects from the draw.io library, contain two sub-elements as SVG elements, one of which covers the entire surface. This means that HA Floorplan cannot render the click areas cleanly. (On the entire map, a click leads to displaying the history of the last configured object instead of the actually clicked element). Creating your own SVG with a ```<rect>``` leads to the same problem.
+So I created an SVG that draws the rectangle as a ```<path>```.
+```xml
+<svg version="1.0" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+	 viewBox="0 0 100 40" xml:space="preserve">
+	    <style>
+        path.icon {
+            stroke-width: 1;
+            stroke: black;
+			@media (prefers-color-scheme: dark) {stroke: white; }
+        }
+    </style>
+<path class="icon"  d="M 0 0 h 100 v 40 h -100 Z" fill-opacity="0" />
+</svg>
+```
+
+#### Dark Mode
+I found the icons at [SVG Repo](https://www.svgrepo.com/svg/2917/solar-panels-couple-in-sunlight). However, in dark mode they remain black. So I simply inserted the style tag (see above) and then assigned this class to the path.
+
+### Home Assistant Floorplan
+You can find the necessary information in the Floorplan documentation. The only special thing is the custom function that looks for the lowest element in the extremely nested SVG export from draw.io to set the text there. With the rectangles that are now paths, this would actually no longer be necessary, as all elements now have a ```<text>```.
+```yaml
+type: custom:floorplan-card
+views:
+  - title: Floorplan
+    path: floorplan
+    theme: Google Dark Theme
+    badges: []
+    cards:
+      - type: custom:floorplan-card
+        full_height: true
+        config:
+          image: /local/floorplan/Power5.svg
+          cache: false
+          console_log_level: info
+          defaults:
+            hover_action: hover-info
+            tap_action: more-info
+            state_action:
+              action: call-service
+              service: floorplan.class_set
+              service_data: default-${entity.state}
+          rules:
+            - element: cell-val_grid_total
+              entity: sensor.power_mains
+              state_action:
+                - service: floorplan.execute
+                  service_data: ${functions.setLowestElementsText(entity, element)};
+            - entity: sensor.ups_power
+              elements:
+                - cell-sw_island_bypass
+                - cell-sw_island_inv
+              state_action:
+                - service: floorplan.style_set
+                  service_data:
+                    element: cell-sw_island_bypass
+                    style: '${(entity.state > 5) ? "opacity:1" : "opacity:0"}'
+                - service: floorplan.style_set
+                  service_data:
+                    element: cell-sw_island_inv
+                    style: '${(entity.state > 5) ? "opacity:0" : "opacity:1"}'
+            - entity: binary_sensor.goe_223755_car_0
+              elements:
+                - cell-ico_car
+                - cell-val_car
+                - cell-line_car
+              state_action:
+                - service: floorplan.style_set
+                  service_data:
+                    style: >-
+                      ${(entity.state==="plugged in") ? "opacity:1" :
+                      "opacity:0"}
+          functions: |
+            >
+            return {
+              setLowestElementsText: (entity, element, precision = 0) => {
+                const valNum = parseFloat(entity.state).toFixed(precision)
+                const value = valNum + entity.attributes.unit_of_measurement
+
+                const leaf = element.querySelector("text")
+                if(leaf){
+                  leaf.textContent=value;
+                  return; 
+                }
+                
+                let lowestNode = null;
+                let maxDepth = -1;
+                
+                function traverse(node, depth) {
+                  if (depth > maxDepth) {
+                      maxDepth = depth;
+                      lowestNode = node;
+                  }
+                  for (let child of node.children) {
+                      traverse(child, depth + 1);
+                  }
+                }
+                
+                traverse(element, 0);
+                lowestNode.textContent=value;
+                return; 
+              },
+            };
+    type: panel
+
+```
