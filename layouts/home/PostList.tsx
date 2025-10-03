@@ -3,19 +3,11 @@ import Link from '@/components/mdxcomponents/Link'
 import Tag from '@/components/tag'
 import { LocaleTypes } from 'app/[locale]/i18n/settings'
 import { format, parseISO } from 'date-fns'
-
-interface Post {
-  slug: string
-  date: string
-  title: string
-  summary?: string | undefined
-  tags: string[]
-  language: string
-  draft?: boolean
-}
+import Image from 'next/image'
+import { Blog } from 'contentlayer/generated'
 
 interface PostListProps {
-  posts: Post[]
+  posts: Blog[]
   locale: LocaleTypes
   t: (key: string) => string
   maxDisplay: number
@@ -26,7 +18,8 @@ const PostList: React.FC<PostListProps> = ({ posts, locale, t, maxDisplay }) => 
     <ul className="divide-y divide-gray-200 dark:divide-gray-700">
       {!posts.length && <li>{t('noposts')}</li>}
       {posts.slice(0, maxDisplay).map((post) => {
-        const { slug, date, title, summary, tags } = post
+        const { slug, date, title, summary, tags} = post
+        const image = post.structuredData.image;
         return (
           <li key={slug} className="py-12">
             <article>
@@ -36,6 +29,14 @@ const PostList: React.FC<PostListProps> = ({ posts, locale, t, maxDisplay }) => 
                   <dd className="text-base font-medium leading-6 text-gray-500 dark:text-gray-400">
                     <time dateTime={date}>{format(parseISO(post.date), 'LLLL d, yyyy')}</time>
                   </dd>
+                  {image && (
+                    <Image
+                      src={image}
+                      alt={""} 
+                      width={240}
+                      height={100}
+                    />
+                  )}
                 </dl>
                 <div className="space-y-5 xl:col-span-3">
                   <div className="space-y-6">

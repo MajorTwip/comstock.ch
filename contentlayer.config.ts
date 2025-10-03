@@ -28,6 +28,7 @@ import remarkObsidian from './components/util/remark-obsidian'
 
 const root = process.cwd()
 const isProduction = process.env.NODE_ENV === 'production'
+const imagesPath = '/static/images/blog/'
 
 // heroicon mini link
 const icon = fromHtmlIsomorphic(
@@ -116,6 +117,14 @@ export const Series = defineNestedType(() => ({
   },
 }))
 
+function getBlogImage(images:string): string | undefined {
+  if (!images) {
+    return undefined;
+  }
+  var image: string = images.split(',')[0];
+  return image.startsWith('/') ? image : imagesPath + image;
+}
+
 export const Blog = defineDocumentType(() => ({
   name: 'Blog',
   filePathPattern: 'blog/**/*.mdx',
@@ -148,7 +157,7 @@ export const Blog = defineDocumentType(() => ({
         datePublished: doc.date,
         dateModified: doc.lastmod || doc.date,
         description: doc.summary,
-        image: doc.images ? doc.images[0] : siteMetadata.socialBanner,
+        image: getBlogImage(doc.images),
         url: `${siteMetadata.siteUrl}/${doc.language}/blog/${doc.slug}`,
       }),
     },
@@ -185,7 +194,7 @@ export default makeSource({
       remarkGfm,
       remarkMath,
       remarkAlert,
-      [remarkObsidian, { imagesPath: '/static/images/blog/' }],
+      [remarkObsidian, { imagesPath: imagesPath }],
 
     ],
     rehypePlugins: [

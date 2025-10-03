@@ -4,19 +4,10 @@ import { createTranslation } from '../app/[locale]/i18n/server'
 import { LocaleTypes } from '../app/[locale]/i18n/settings'
 import PostList from './home/PostList'
 import LayoutHeader from './home/LayoutHeader'
-
-interface Post {
-  slug: string
-  date: string
-  title: string
-  summary?: string | undefined
-  tags: string[]
-  language: string
-  draft?: boolean
-}
+import { Blog } from 'contentlayer/generated'
 
 interface HomeProps {
-  posts: Post[]
+  posts: Blog[]
   params: { locale: LocaleTypes }
 }
 
