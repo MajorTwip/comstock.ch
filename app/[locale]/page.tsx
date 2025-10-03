@@ -13,9 +13,9 @@ interface PageProps {
 export default async function Page({ params }: PageProps) {
   const { locale } = await params
 
-  const posts : Blog[] = allBlogs.sort((a, b) => compareDesc(new Date(a.date), new Date(b.date)))
-  const filteredPosts : Blog[] = posts.filter((p) => p.language === locale)
-  const hasFeaturedPosts : Blog[] = filteredPosts.filter((p) => p.featured === true)
+  const posts: Blog[] = allBlogs.sort((a, b) => compareDesc(new Date(a.date), new Date(b.date)))
+  const filteredPosts: Blog[] = posts.filter((p) => p.language === locale)
+  const hasFeaturedPosts: Blog[] = filteredPosts.filter((p) => p.featured === true)
 
   return (
     <>

@@ -25,6 +25,7 @@ import siteMetadata from './data/siteMetadata'
 import { fallbackLng, secondLng } from './app/[locale]/i18n/locales'
 import { compareDesc } from 'date-fns'
 import remarkObsidian from './components/util/remark-obsidian'
+import { S } from 'framer-motion/dist/types.d-CtuPurYT'
 
 const root = process.cwd()
 const isProduction = process.env.NODE_ENV === 'production'
@@ -117,12 +118,13 @@ export const Series = defineNestedType(() => ({
   },
 }))
 
-function getBlogImage(images:string): string | undefined {
-  if (!images) {
+function getBlogImage(images: string[], image: string | undefined): string | undefined {
+  //console.log(`getBlogImage: images=${images.length}:${images} , image=${image}`);
+  if (images.length === 0 && image === undefined) {
     return undefined;
   }
-  var image: string = images.split(',')[0];
-  return image.startsWith('/') ? image : imagesPath + image;
+  const result = image !== undefined ? image : images[0];
+  return result ? (result.startsWith('/') ? result : imagesPath + result) : undefined;
 }
 
 export const Blog = defineDocumentType(() => ({
@@ -139,7 +141,8 @@ export const Blog = defineDocumentType(() => ({
     featured: { type: 'boolean' },
     draft: { type: 'boolean' },
     summary: { type: 'string' },
-    images: { type: 'json' },
+    image: { type: 'string' },
+    images: { type: 'list', of: { type: 'string' }, default: [] },
     authors: { type: 'list', of: { type: 'string' }, required: true },
     layout: { type: 'string' },
     bibliography: { type: 'string' },
@@ -157,7 +160,7 @@ export const Blog = defineDocumentType(() => ({
         datePublished: doc.date,
         dateModified: doc.lastmod || doc.date,
         description: doc.summary,
-        image: getBlogImage(doc.images),
+        image: getBlogImage(doc.images, doc.image),
         url: `${siteMetadata.siteUrl}/${doc.language}/blog/${doc.slug}`,
       }),
     },
