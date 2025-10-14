@@ -6,7 +6,7 @@ const siteMetadata = {
   description: 'Personal Blog, some kind of Knowledge-Store',
   language: 'de-ch',
   theme: 'dark', // system, dark or light
-  siteUrl: 'https://majortwip.github.io/',
+  siteUrl: 'https://comstock.ch/',
   siteRepo: 'https://github.com/MajorTwip/majortwip.github.io',
   siteLogo: `${process.env.BASE_PATH || ''}/static/images/logo.png`,
   socialBanner: `${process.env.BASE_PATH || ''}/static/images/twitter-card.png`,
