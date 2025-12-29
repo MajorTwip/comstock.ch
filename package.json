@@ -7,30 +7,32 @@
   "private": true,
   
   "scripts": {
-
-    
-  "start": "next dev",
-
-    
-  "dev": "next dev --webpack",
-
-    
-  "build": " next build && node ./scripts/postbuild.mjs",
-
-    
-  "serve": "next start",
-
-    
-  "analyze": "cross-env ANALYZE=true next build",
-
-    
-  "lint": "next lint --fix --dir pages --dir app --dir components --dir lib --dir layouts --dir scripts",
-
-    
-  "format": "prettier -w ./app ./components ./layouts",
   
     
-  "postinstall": "patch-package"
+  "start": "next dev",
+  
+    
+  "dev": "next dev --webpack",
+  
+    
+  "build": " next build && node ./scripts/postbuild.mjs",
+  
+    
+  "serve": "next start",
+  
+    
+  "analyze": "cross-env ANALYZE=true next build",
+  
+    
+  "lint": "next lint --fix --dir pages --dir app --dir components --dir lib --dir layouts --dir scripts",
+  
+    
+  "format": "prettier -w ./app ./components ./layouts"
+
+  ,
+  
+    
+  "postinstall": "node ./scripts/apply-punycode-fix.js"
 
   },
   
@@ -204,10 +206,6 @@
   
     
   "typescript": "^5"
-  ,
-  
-    
-  "patch-package": "^8.0.0"
   
   },
   
