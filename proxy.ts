@@ -2,7 +2,7 @@ import { NextResponse, NextRequest } from 'next/server'
 import { locales } from 'app/[locale]/i18n/settings'
 import { fallbackLng } from 'app/[locale]/i18n/locales'
 
-export function middleware(request: NextRequest) {
+export default function proxy(request: NextRequest) {
   // Check if there is any supported locale in the pathname
   const pathname = request.nextUrl.pathname
 
@@ -33,7 +33,7 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Do not run the middleware on the following paths
+  // Do not run the proxy on the following paths
   // prettier-ignore
   matcher:
   '/((?!api|static|track|data|css|scripts|.*\\..*|_next).*|sitemap.xml)',
