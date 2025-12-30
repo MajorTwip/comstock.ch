@@ -5,7 +5,11 @@ FROM node:24-alpine AS builder
 WORKDIR /app
 
 # Copy package files and install dependencies
+<<<<<<< HEAD
 COPY package.json package-lock.json scripts ./ 
+=======
+COPY package.json package-lock.json scripts/ ./ 
+>>>>>>> 78489634ebec2d5ae47410da1258aa128348c948
 RUN npm ci
 
 # Copy application code
