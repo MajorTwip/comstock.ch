@@ -15,13 +15,13 @@
   "dev": "next dev --webpack",
   
     
-  "build": " next build && node ./scripts/postbuild.mjs",
+  "build": "next build --webpack && node ./scripts/postbuild.mjs",
   
     
   "serve": "next start",
   
     
-  "analyze": "cross-env ANALYZE=true next build",
+  "analyze": "cross-env ANALYZE=true next build --webpack",
   
     
   "lint": "next lint --fix --dir pages --dir app --dir components --dir lib --dir layouts --dir scripts",
