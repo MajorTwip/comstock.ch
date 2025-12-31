@@ -1,0 +1,509 @@
+---
+title: NetApp cluster recovery after power outage
+date: 2025-08-06
+authors:
+  - MajorTwip
+language: en
+tags:
+  - NetApp
+  - IT
+image: netapp/clusterrettungnachpowerout.png
+summary: Suddenly nothing worked: the LUNs were gone and the servers would not boot. Where is my data?
+draft: true
+---
+
+# Starting point
+To run an experimental platform I received a pre-configured NetApp. There is no support for it. Until now I had never worked with NetApp or any other SAN.
+This NetApp primarily serves an HPE DL380 G10 which boots ESXi from a LUN on the NetApp. Suddenly nothing worked, the NetApp was off. First thought: power outage?
+So, boot.
+I connected both nodes via Micro-USB cable and used PuTTY on COM20 and COM21 at 115200 baud.
+
+# Recovering the cluster
+
+COM20
+```
+LOADER-A> boot_ontap
+
+[...blabla...]
+May 23 14:03:39 [netapp05-02:mgr.boot.unequalDist:error]: Warning: Unequal number of disks will be used for auto-partitioning of the root aggregate on the local system and HA partner. The local system will use 8 disks but the HA partner will use 6 disks. To correct this situation, boot both controllers into maintenance mode and remove the ownership of all disks.
+May 23 14:03:39 [netapp05-02:fmmb.disk.notAccsble:notice]: All Local mailbox disks are inaccessible.
+May 23 14:03:39 [netapp05-02:fmmb.disk.notAccsble:notice]: All Partner mailbox disks are inaccessible.
+May 23 14:03:39 [netapp05-02:raid.assim.disk.brokenPreAssim:error]: Broken Disk 0b.05.9P2 Shelf 5 Bay 9 [NETAPP   X427_HCBFE1T8A10 NA06] S/N [08HJ1LJANP002] UID [6000CCA0:2C558DC0:500A0981:00000002:00000000:00000000:00000000:00000000:00000000:00000000] detected prior to assimilation.
+May 23 14:03:39 [netapp05-02:kern.syslog.msg:notice]: FAILOVER: fmrsrc_startSecondary() - TakeOver for fmdisk_reserve done in 20 msecs (Since TO started: 20)
+
+May 23 14:03:39 [netapp05-01:raid.assim.disk.brokenPreAssim:error]: Broken Disk 0a.05.6P1 Shelf 5 Bay 6 [NETAPP   X427_HCBFE1T8A10 NA06] S/N [08HJ5RVANP001] UID [6000CCA0:2C55CBE8:500A0981:00000001:00000000:00000000:00000000:00000000:00000000:00000000] detected prior to assimilation.
+May 23 14:03:39 [netapp05-01:raid.assim.disk.brokenPreAssim:error]: Broken Disk 0b.05.9P1 Shelf 5 Bay 9 [NETAPP   X427_HCBFE1T8A10 NA06] S/N [08HJ1LJANP001] UID [6000CCA0:2C558DC0:500A0981:00000001:00000000:00000000:00000000:00000000:00000000:00000000] detected prior to assimilation.
+May 23 14:03:39 [netapp05-01:raid.assim.disk.brokenPreAssim:error]: Broken Disk 0a.05.6P2 Shelf 5 Bay 6 [NETAPP   X427_HCBFE1T8A10 NA06] S/N [08HJ5RVANP002] UID [6000CCA0:2C55CBE8:500A0981:00000002:00000000:00000000:00000000:00000000:00000000:00000000] detected prior to assimilation.
+May 23 14:03:40 [netapp05-02:kern.syslog.msg:notice]: FAILOVER: fmrsrc_startSecondary() - TakeOver for raid done in 274 msecs (Since TO started: 294)
+[...]
+
+May 23 14:03:42 [netapp05-02:LUN.nvfail.vol.proc.complete:error]: LUNs in volume IIL_4 (DSID 1314) have been brought offline because an inconsistency was detected in the nvlog during boot or takeover.
+May 23 14:03:42 [netapp05-02:kern.syslog.msg:notice]: The system was down for 73786 seconds
+May 23 14:03:42 [netapp05-02:cf.fsm.takeoverByPartnerDisabled:error]: Failover monitor: takeover of netapp05-02 by netapp05-01 disabled (Already in takeover mode).
+May 23 14:03:42 [netapp05-02:cf.fm.takeoverStarted:notice]: Failover monitor: takeover started
+[...]
+
+May 23 14:03:42 [netapp05-01:lmgr.sf.up.ready:notice]: Lock manager allowed high availability module to transition to the up state for the following reason: Partner down.
+[...]
+
+May 23 14:04:00 [netapp05-02:monitor.globalStatus.critical:EMERGENCY]: This node has taken over netapp05-01. Disk on adapter 0b, shelf 5, bay 9, failed.
+May 23 14:04:18 [netapp05-02:callhome.root.vol.recovery.reqd:EMERGENCY]: Call home for ROOT VOLUME NOT WORKING PROPERLY: RECOVERY REQUIRED.
+
+```
+COM21
+```
+LOADER-B> boot_ontap
+
+[...blabla...]
+May 23 14:11:46 [netapp05-01:disk.init.failureBytes:error]: Failed disk 0b.05.12 detected during disk initialization.
+Reservation conflict found on this node's disks!
+[...]
+
+Waiting for giveback...(Press Ctrl-C to abort wait)
+This node was previously declared dead.
+Pausing to check HA partner status ...
+partner is operational and in takeover mode.
+
+You must initiate a giveback or shutdown on the HA
+partner in order to bring this node online.
+
+
+The HA partner is currently operational and in takeover mode.This node cannot continue unless you initiate a giveback on the partner.
+Once this is done this node will reboot automatically.
+
+waiting for giveback...
+
+```
+
+Uh oh, unhealthy.
+
+## Fixing
+So, log in to Node A:
+```
+login: 
+Password:
+******************************************************
+* This is a serial console session. Output from this *
+* session is mirrored on the SP console session.     *
+******************************************************
+***********************
+**  SYSTEM MESSAGES  **
+***********************
+
+Internal error. Cannot open corrupt replicated database. Automatic recovery
+attempt has failed or is disabled. Check the event logs for details. This node
+is not fully operational. Contact support personnel for the root volume recovery
+procedures.
+
+```
+
+In the meantime Node B finished booting:
+```
+Partner has released takeover lock.
+Continuing boot...
+[...]
+May 23 14:21:51 [netapp05-01:disk.dynamicqual.fail.parse:error]: Device qualification information file (/etc/qual_devices) is invalid. The following error, " Unsupported File version detected.
+" has been detected. For further information about correcting the problem, search the knowledgebase of the NetApp technical support support web site for the "[disk.dynamicqual.fail.parse]" keyword.
+[...]
+May 23 14:21:51 [netapp05-01:cf.fsm.takeoverOfPartnerDisabled:error]: Failover monitor: takeover of netapp05-02 disabled (unsynchronized log).
+May 23 14:21:52 [netapp05-01:raid.fdr.reminder:error]: Failed Disk 0a.05.6 Shelf 5 Bay 6 [NETAPP   X427_HCBFE1T8A10 NA06] S/N [08HJ5RVA] UID [5000CCA0:2C55CBE8:00000000:00000000:00000000:00000000:00000000:00000000:00000000:00000000] is still present in the system and should be removed.
+May 23 14:21:52 [netapp05-01:raid.fdr.reminder:error]: Failed Disk 0b.05.9 Shelf 5 Bay 9 [NETAPP   X427_HCBFE1T8A10 NA06] S/N [08HJ1LJA] UID [5000CCA0:2C558DC0:00000000:00000000:00000000:00000000:00000000:00000000:00000000:00000000] is still present in the system and should be removed.
+
+```
+And yes, disks are obviously broken!
+
+Now Node B seems to be in better shape:
+Node A:
+```
+netapp05::> cluster show
+Error: "show" is not a recognized command
+```
+Node B:
+```
+netapp05::> cluster show
+Node                  Health  Eligibility
+--------------------- ------- ------------
+netapp05-01           true    true
+netapp05-02           false   true
+2 entries were displayed.
+```
+
+Let's try a recovery:
+```
+netapp05::*> system node show
+Node      Health Eligibility Uptime        Model       Owner    Location
+--------- ------ ----------- ------------- ----------- -------- ---------------
+""        -      -                       - -           -        -
+netapp05-02
+          -      -                00:37:41 FAS2650
+
+Warning: Cluster HA has not been configured.  Cluster HA must be configured on
+         a two-node cluster to ensure data access availability in the event of
+         storage failover. Use the "cluster ha modify -configured true" command
+         to configure cluster HA.
+2 entries were displayed.
+
+netapp05::*> system configuration backup show
+Node       Backup Name                               Time               Size
+---------  ----------------------------------------- ------------------ -----
+netapp05-02
+           netapp05.8hour.2025-05-12.18_15_03.7z     05/12 19:15:03     76.00MB
+netapp05-02
+           netapp05.8hour.2025-05-13.02_15_03.7z     05/13 03:15:03     76.65MB
+netapp05-02
+           netapp05.daily.2025-05-12.00_10_03.7z     05/12 01:10:03     76.90MB
+netapp05-02
+           netapp05.daily.2025-05-13.00_10_03.7z     05/13 03:15:03     76.25MB
+netapp05-02
+           netapp05.weekly.2025-05-04.00_15_03.7z    05/04 01:15:03     77.49MB
+netapp05-02
+           netapp05.weekly.2025-05-11.00_15_03.7z    05/11 01:15:03     77.75MB
+6 entries were displayed.
+
+netapp05::*> system configuration recovery node restore -backup  netapp05.8hour.2025-05-13.02_15_03.7z
+
+Warning: This command overwrites local configuration files with files contained
+         in the specified backup file. Use this command only to recover from a
+         disaster that resulted in the loss of the local configuration files.
+         The node will reboot after restoring the local configuration.
+Do you want to continue? {y|n}: y
+Verifying that the node is offline in the cluster.
+Verifying that the backup tarball exists.
+Extracting the backup tarball.
+Verifying that software and hardware of the node match with the backup.
+Stopping cluster applications.  
+```
+
+After the reboot, unfortunately everything was still the same. I tried an older backup.
+
+These approaches were now open:
+```
+varfs_backup_restore: bootarg.abandon_varfs is set! Skipping /var backup.
+```
+This is probably due to the backup restore.
+But this?
+```
+*********************************************
+* ALERT: SHA256 checksum failure detected   *
+*        in boot device                     *
+*                                           *
+* Contact technical support for assistance. *
+*********************************************
+ERROR: netapp_varfs: SHA256 checksum failure detected in boot device. Contact technical support for assistance.
+[...]
+May 26 07:56:34 [netapp05-02:callhome.root.vol.recovery.reqd:EMERGENCY]: Call home for ROOT VOLUME NOT WORKING PROPERLY: RECOVERY REQUIRED.
+```
+This led me to the following KB: https://kb.netapp.com/on-prem/ontap/OHW/OHW-KBs/System_does_not_start_after_reboot_due_to_Unable_to_recover_the_local_database_of_Data_Replication_Module
+But of the 3 ENV entries, 2 are unknown...
+```
+LOADER-A> unsetenv bootarg.rdb_corrupt
+LOADER-A> unsetenv bootarg.init.boot_recovery
+LOADER-A> unsetenv bootarg.rdb_corrupt.mgwd
+LOADER-A> saveenv
+LOADER-A> bye
+```
+
+EUREKA!
+```
+netapp05::> cluster show
+Node                  Health  Eligibility
+--------------------- ------- ------------
+netapp05-01           true    true
+netapp05-02           true    true
+2 entries were displayed.
+```
+
+# Reviving the aggregate
+In the older NetApp there are now 3 SAS disks dying. Is it too late?
+```
+netapp05::> storage aggregate show
+
+
+Aggregate     Size Available Used% State   #Vols  Nodes            RAID Status
+--------- -------- --------- ----- ------- ------ ---------------- ------------
+n01_SAS         0B        0B    0% failed       0 netapp05-01      raid_dp,
+                                                                   partial
+n01_root   368.4GB   17.85GB   95% online       1 netapp05-01      raid_dp,
+                                                                   normal
+n02_SSD    18.86TB   15.17TB   20% online      17 netapp05-02      raid_dp,
+                                                                   normal
+n02_root   368.4GB   17.85GB   95% online       1 netapp05-02      raid_dp,
+                                                                   normal
+4 entries were displayed.
+
+netapp05::> storage disk show
+                     Usable           Disk    Container   Container
+Disk                   Size Shelf Bay Type    Type        Name      Owner
+---------------- ---------- ----- --- ------- ----------- --------- --------
+
+Info: This cluster has partitioned disks. To get a complete list of spare disk
+      capacity use "storage aggregate show-spare-disks".
+1.5.0                     -     5   0 unknown unsupported -         -
+1.5.1                1.63TB     5   1 SAS     shared      n01_SAS   netapp05-02
+1.5.2                1.63TB     5   2 SAS     shared      n01_SAS, n01_root
+                                                                    netapp05-01
+1.5.3                1.63TB     5   3 SAS     shared      n01_SAS, n02_root
+                                                                    netapp05-02
+1.5.4                1.63TB     5   4 SAS     shared      n01_SAS, n01_root
+                                                                    netapp05-01
+1.5.5                1.63TB     5   5 SAS     shared      n01_SAS, n02_root
+                                                                    netapp05-02
+1.5.6                1.63TB     5   6 SAS     broken      -         netapp05-01
+1.5.7                1.63TB     5   7 SAS     shared      n01_SAS, n02_root
+                                                                    netapp05-02
+1.5.8                1.63TB     5   8 SAS     shared      n01_SAS, n01_root
+                                                                    netapp05-01
+1.5.9                1.63TB     5   9 SAS     broken      -         netapp05-02
+1.5.10               1.63TB     5  10 SAS     shared      n01_SAS, n01_root
+                                                                    netapp05-01
+1.5.11               1.63TB     5  11 SAS     shared      n01_SAS, n02_root
+                                                                    netapp05-02
+1.5.12                    -     5  12 SAS     broken      -         -
+1.5.13               1.63TB     5  13 SAS     shared      n01_SAS, n02_root
+                                                                    netapp05-02
+1.5.14               1.63TB     5  14 SAS     shared      n01_SAS, n01_root
+                                                                    netapp05-01
+1.5.15               3.49TB     5  15 SSD     aggregate   n02_SSD   netapp05-02
+1.5.16               3.49TB     5  16 SSD     aggregate   n02_SSD   netapp05-02
+1.5.17               3.49TB     5  17 SSD     aggregate   n02_SSD   netapp05-02
+1.5.18               3.49TB     5  18 SSD     aggregate   n02_SSD   netapp05-02
+1.5.19               3.49TB     5  19 SSD     aggregate   n02_SSD   netapp05-02
+1.5.20               3.49TB     5  20 SSD     aggregate   n02_SSD   netapp05-02
+1.5.21               3.49TB     5  21 SSD     aggregate   n02_SSD   netapp05-02
+1.5.22               3.49TB     5  22 SSD     aggregate   n02_SSD   netapp05-02
+1.5.23               3.49TB     5  23 SSD     spare       Pool0     netapp05-02
+24 entries were displayed.
+```
+
+### Using the spare disk
+A spare disk is available (I am surprised it is not automatically added to the aggregate). First I tried replacing a broken disk with the spare. No luck.
+```
+netapp05::> storage disk replace -disk 1.5.6 -replacement 1.5.1 -action start
+Error: command failed: Disk "1.5.6" is not in present state.
+```
+Ok, try to temporarily reactivate the disks:
+```
+netapp05::> set advanced
+netapp05::*> disk unfail -disk 1.5.6
+netapp05::*> disk unfail -disk 1.5.9
+netapp05::*> disk unfail -disk 1.5.12
+
+netapp05::*> aggr show-status
+
+Owner Node: netapp05-01
+ Aggregate: n01_SAS (online, raid_dp, reconstruct, degraded) (block checksums)
+  Plex: /n01_SAS/plex0 (online, normal, active, pool0)
+   RAID Group /n01_SAS/plex0/rg0 (reconstruction 0% completed, block checksums)
+                                                              Usable Physical
+     Position Disk                        Pool Type     RPM     Size     Size Status
+     -------- --------------------------- ---- ----- ------ -------- -------- ----------
+     shared   1.5.10                       0   SAS    10000   1.49TB   1.64TB (normal)
+     shared   1.5.3                        0   SAS    10000   1.49TB   1.64TB (normal)
+     shared   1.5.5                        0   SAS    10000   1.49TB   1.64TB (normal)
+     shared   1.5.7                        0   SAS    10000   1.49TB   1.64TB (normal)
+     shared   1.5.9                        0   SAS    10000   1.49TB   1.64TB (normal)
+     shared   1.5.11                       0   SAS    10000   1.49TB   1.64TB (normal)
+     shared   1.5.1                        0   SAS    10000   1.49TB   1.64TB (normal)
+     shared   1.5.13                       0   SAS    10000   1.49TB   1.64TB (normal)
+     shared   1.5.14                       0   SAS    10000   1.49TB   1.64TB (normal)
+     shared   1.5.4                        0   SAS    10000   1.49TB   1.64TB (normal)
+     shared   1.5.6                        0   SAS    10000   1.49TB   1.64TB (reconstruction 0% completed)
+     shared   1.5.8                        0   SAS    10000   1.49TB   1.64TB (normal)
+     shared   1.5.2                        0   SAS    10000   1.49TB   1.64TB (normal)
+     shared   FAILED                       -   -          -   1.49TB       0B (failed)
+
+```
+So 1.5.9 is currently running (but I do not trust it), 1.5.12 stays dead, and 1.5.6 is doing something...
+
+## Moving from an old NetApp
+To replace the broken disks I used drives from another NetApp. The disks are identical, same product number.
+But that disk was not cleanly removed and cannot be read just like that:
+```
+netapp05::*> storage disk show
+                     Usable           Disk    Container   Container
+Disk                   Size Shelf Bay Type    Type        Name      Owner
+---------------- ---------- ----- --- ------- ----------- --------- --------
+1.5.0                     -     5   0 unknown unsupported -         -
+1.5.1                1.63TB     5   1 SAS     shared      n01_SAS   netapp05-02
+1.5.2                1.63TB     5   2 SAS     shared      n01_SAS, n01_root
+[...]
+
+netapp05::*> storage disk show -disk 1.5.0
+                  Disk: 1.5.0
+        Container Type: unsupported
+            Owner/Home: -  / -
+               DR Home: -
+    Stack ID/Shelf/Bay: 1  / 5  / 0
+                   LUN: 0
+                 Array: N/A
+                Vendor: NETAPP
+                 Model: X427_HCBFE1T8A10
+         Serial Number: -
+                   UID: 5000CCA0:2C55A2F0:00000000:00000000:00000000:00000000:00000000:00000000:00000000:00000000
+                   BPS: 520
+         Physical Size: 0B
+              Position: present
+Checksum Compatibility: block
+             Aggregate: -
+                  Plex: -
+Paths:
+                                LUN  Initiator Side        Target Side                                                                              Link
+Controller         Initiator     ID  Switch Port           Switch Port           Acc Use  Target Port              TPGN    Speed      I/O KB/s          IOPS
+------------------ ---------  -----  --------------------  --------------------  --- ---  -----------------------  ------  -------  ------------  ------------
+netapp05-02        0a             0  N/A                   N/A                   AO  INU  5000cca02c55a2f2             86  12 Gb/S             0             0
+netapp05-02        0b             0  N/A                   N/A                   AO  RDY  5000cca02c55a2f1             55  12 Gb/S             0             0
+netapp05-01        0a             0  N/A                   N/A                   AO  INU  5000cca02c55a2f1             55  12 Gb/S             0             0
+netapp05-01        0b             0  N/A                   N/A                   AO  RDY  5000cca02c55a2f2             86  12 Gb/S             0             0
+
+Errors:
+The node is configured with All-Flash Optimized personality and this disk is not an SSD. The disk needs to be removed from the system.
+```
+
+After a lot of searching I found out that this indicates self-encrypting disks (SED). Fortunately I still had access to the old cluster and could reinsert the disk there. The two volumes on those disks were moved (likely not needed anymore, but you never know) using `volume move` to the remaining aggregates, then the old SAS aggregate was deleted. After plenty of trial and error, the following steps finally worked:
+```
+set d
+node run netapp-master-01 -command disk remove_ownership 0a.00.0P1
+node run netapp-master-01 -command disk remove_ownership 0a.00.0P2
+node run netapp-master-01 -command disk remove_ownership 0a.00.0
+
+system node run -node netapp-master-01 disk unpartition 0a.00.0
+
+storage encryption disk modify -disk 1.0.0 -fips-key-id 0x0
+storage encryption disk modify -disk 1.0.0 -data-key-id  0x0
+
+netapp01::> storage disk show
+                     Usable           Disk    Container   Container
+Disk                   Size Shelf Bay Type    Type        Name      Owner
+---------------- ---------- ----- --- ------- ----------- --------- --------
+
+Info: This cluster has partitioned disks. To get a complete list of spare disk
+      capacity use "storage aggregate show-spare-disks".
+1.0.0                1.63TB     0   0 SAS     spare       Pool0     netapp-master-01
+
+
+netapp01::> storage encryption disk show
+Disk     Mode Data Key ID
+-------- ---- ----------------------------------------------------------------
+1.0.0    data 000000000000000002000000000001000B8C0C4412BBFE9EDB2951E40BE463E6
+```
+So now the disk was finally marked as spare and open, and the new cluster recognized it.
+
+```
+storage disk assign -disk 1.5.2 -owner netapp05-01 -data
+
+netapp05::storage disk*> storage disk show
+                     Usable           Disk    Container   Container
+Disk                   Size Shelf Bay Type    Type        Name      Owner
+---------------- ---------- ----- --- ------- ----------- --------- --------
+---------------- ---------- ----- --- ------- ----------- --------- --------
+1.5.1                1.63TB     5   1 SAS     shared      n01_SAS   netapp05-02
+1.5.2                1.63TB     5   2 SAS     shared      -         netapp05-01
+```
+
+Now this disk only has to replace the FAILED slot in the aggregate. That seems to happen automatically.
+
+```
+netapp05::storage disk*> storage aggregate show-status
+
+Owner Node: netapp05-01
+ Aggregate: n01_SAS (online, raid_dp, reconstruct, degraded) (block checksums)
+  Plex: /n01_SAS/plex0 (online, normal, active, pool0)
+   RAID Group /n01_SAS/plex0/rg0 (reconstruction 0% completed, block checksums)
+                                                              Usable Physical
+     Position Disk                        Pool Type     RPM     Size     Size Status
+     -------- --------------------------- ---- ----- ------ -------- -------- ----------
+     shared   1.5.10                       0   SAS    10000   1.49TB   1.64TB (normal)
+     shared   1.5.3                        0   SAS    10000   1.49TB   1.64TB (normal)
+     shared   1.5.5                        0   SAS    10000   1.49TB   1.64TB (normal)
+     shared   1.5.7                        0   SAS    10000   1.49TB   1.64TB (normal)
+     shared   1.5.9                        0   SAS    10000   1.49TB   1.64TB (normal)
+     shared   1.5.11                       0   SAS    10000   1.49TB   1.64TB (normal)
+     shared   1.5.1                        0   SAS    10000   1.49TB   1.64TB (normal)
+     shared   1.5.13                       0   SAS    10000   1.49TB   1.64TB (normal)
+     shared   1.5.14                       0   SAS    10000   1.49TB   1.64TB (normal)
+     shared   1.5.4                        0   SAS    10000   1.49TB   1.64TB (normal)
+     shared   1.5.6                        0   SAS    10000   1.49TB   1.64TB (normal)
+     shared   1.5.8                        0   SAS    10000   1.49TB   1.64TB (normal)
+     shared   1.5.2                        0   SAS    10000   1.49TB   1.64TB (reconstruction 0% completed)
+     shared   FAILED                       -   -          -   1.49TB       0B (failed)
+
+```
+
+# Fixing the LUN
+
+## Starting point
+After the cluster and the aggregates were back up, the servers connected via iSCSI still refused to start. The SMB share was reachable... interesting.
+
+## Bring online
+In the NetApp web GUI the IOPS peaks showed up every 5 seconds, every time the server attempted to boot and then reported "no bootable device".
+Under the LUN actions I found the option "bring online", which immediately returned an alert:
+**The volume is in nvfailed state**
+
+After a quick search I found:
+https://kb.netapp.com/on-prem/ontap/OHW/OHW-KBs/lun_online_fails_with_Error_The_volume_is_in_nvfailed_state
+
+```
+netapp05::> ucadmin show
+                       Current  Current    Pending  Pending    Admin
+Node          Adapter  Mode     Type       Mode     Type       Status
+------------  -------  -------  ---------  -------  ---------  -----------
+netapp05-01   0c       cna      target     -        -          online
+netapp05-01   0d       cna      target     -        -          online
+netapp05-01   0e       cna      target     -        -          online
+netapp05-01   0f       cna      target     -        -          online
+netapp05-02   0c       cna      target     -        -          online
+netapp05-02   0d       cna      target     -        -          online
+netapp05-02   0e       cna      target     -        -          online
+netapp05-02   0f       cna      target     -        -          online
+8 entries were displayed.
+
+netapp05::> network interface show
+            Logical    Status     Network            Current       Current Is
+Vserver     Interface  Admin/Oper Address/Mask       Node          Port    Home
+----------- ---------- ---------- ------------------ ------------- ------- ----
+Cluster
+            netapp05-01_clus1
+                         up/up    169.254.214.208/16 netapp05-01   e0a     true
+            netapp05-01_clus2
+                         up/up    169.254.52.115/16  netapp05-01   e0b     true
+            netapp05-02_clus1
+                         up/up    169.254.159.191/16 netapp05-02   e0a     true
+            netapp05-02_clus2
+                         up/up    169.254.244.129/16 netapp05-02   e0b     true
+netapp05
+            bkup-lif_1   up/up    172.16.19.222/24   netapp05-01   a0a-1619
+                                                                           true
+            bkup-lif_2   up/up    172.16.19.223/24   netapp05-02   a0a-1619
+                                                                           true
+            cluster_mgmt up/up    172.16.17.221/24   netapp05-01   e0M     true
+[...]
+39 entries were displayed.
+```
+Everything up/up...
+But this:
+```
+netapp05::> lun show
+Vserver   Path                            State   Mapped   Type        Size
+--------- ------------------------------- ------- -------- -------- --------
+svm10     /vol/IIL_Insight/IIL_Insight    nvfail  mapped   vmware     1.95TB
+svm11     /vol/IIL_1/IIL_1                nvfail  mapped   vmware     1.95TB
+svm11     /vol/IIL_1_clone_300/IIL_1      nvfail  unmapped vmware     1.95TB
+svm11     /vol/IIL_1_clone_371/IIL_1      nvfail  unmapped vmware     1.95TB
+svm12     /vol/IIL_2/IIL_2                nvfail  mapped   vmware     1.95TB
+svm13     /vol/IIL_3/IIL_3                nvfail  mapped   vmware     1.95TB
+svm14     /vol/IIL_4/IIL_4                nvfail  mapped   vmware     1.95TB
+
+netapp05::> lun online -vserver svm11 -path /vol/IIL_1/IIL_1
+
+Error: command failed: The volume is in nvfailed state
+```
+Not good...
+
+```
+netapp05::*> volume modify  -vserver svm11 -volume IIL_1 -in-nvfailed-state false
+Volume modify successful on volume IIL_1 of Vserver svm11.
+
+netapp05::*> lun online -vserver svm11 -path /vol/IIL_1/IIL_1
+
+```
+That was refreshingly simple...
