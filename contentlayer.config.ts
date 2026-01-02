@@ -93,11 +93,11 @@ function createTagCount(allBlogs) {
 
 function createSearchIndex(allBlogs) {
   if (
-    siteMetadata?.search?.provider === 'kbar' &&
-    siteMetadata.search.kbarConfig.searchDocumentsPath
+    siteMetadata?.search?.provider === 'local' &&
+    siteMetadata.search.local.searchDocumentsPath
   ) {
     writeFileSync(
-      `public/${siteMetadata.search.kbarConfig.searchDocumentsPath}`,
+      `public/${siteMetadata.search.local.searchDocumentsPath}`,
       JSON.stringify(allBlogs.sort((a, b) => compareDesc(new Date(a.date), new Date(b.date))))
     )
     console.log('Local search index generated...')

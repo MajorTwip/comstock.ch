@@ -3,7 +3,7 @@
 - Purpose: quick guide for Codex agents working on this repo.
 
 ## Stack and features
-- Next.js App Router blog starter with Tailwind CSS, Contentlayer2 + MDX, Zustand-driven client pagination/tags, i18next-based i18n, kbar search, share buttons, series + featured posts, optional audio player/lightbox/Framer Motion touches, Waline comments, Formspree modal.
+- Next.js App Router blog starter with Tailwind CSS, Contentlayer2 + MDX, Zustand-driven client pagination/tags, i18next-based i18n, simple local search, share buttons, series + featured posts, optional audio player/lightbox/Framer Motion touches, Waline comments, Formspree modal.
 - Routes + layouts under `app/[locale]`; custom middleware rewrites default locale and handles missing locale.
 
 ## Local dev

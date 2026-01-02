@@ -61,8 +61,8 @@ All this can sometimes seem obsessive regarding the UI and details, -maybe too n
 For now :
 - New "WebsiteEmbed" MDX component : Embed your demo templates from github with ease, and show them on your website! (Don't forget to update your Content Security Policy in the config files of your templates)
 - New "sidetoc" component :  display automatically the table of contents of your posts in a dedicated sidebar.
-- Integration of email, theme, as well as a button to quickly copy the URL of the page you are on, with the kbar palette command.
-The motivation for this is having explored other command palette libraries, with some offering nested elements for 'Actions'. Unfortunately this is not possible with kbar, but it gave me new ideas!
+- Integration of email, theme, as well as a button to quickly copy the URL of the page you are on, with a simple in-app search.
+The motivation for this is having explored other command palette libraries, but I wanted a lightweight local search.
 - Multi-authors feature for "about" section: each author can have it's own about page available inside a dropdown menu on large screens, or displayed directly on small screens. If you want to turn it off and only use the "normal", classical about section, go to sitemetadata.js and set multiauthors to false. In any case, your main author now needs to have the field "default" set to true.
 - Featured section on home page for posts you want to pin to top : set featured to true (max two posts by default, can be modified in Featured.tsx file, in component folder) The program will pick the latest two posts with "featured : true." If no featured posts are available, this section will simply not be displayed!
 - Each tag now has its own pagination! If the number of posts is greater than the one you have defined (by default, set to 5) then a new page is automatically created for subsequent posts including the same tag.
@@ -681,10 +681,10 @@ Again, simply modify the logic keeping the same general structure, and according
 
 ## Search bar :
 
-The original repository allows support for kbar and algolia.
+The original repository allows support for algolia.
 
-Here, the search bar relies on the kbar library, and Algolia support is not planned.
-If you prefer to use Algolia, it will be up to you to implement it on your site, instead of kbar.
+Here, the search bar relies on a simple local search, and Algolia support is not planned.
+If you prefer to use Algolia, it will be up to you to implement it on your site, instead of the local search.
 
 There's an issue when using regular translations, so I implemented a workaround for that problem. Just modify the name in each menu item, as well as the navigationSection object, based on the languages you're using.
 
@@ -738,83 +738,7 @@ There's an issue when using regular translations, so I implemented a workaround 
   /* issue when using regular translations, this is a workaround to show how to implement section titles */
    /*Modify the following line based on your implemented languages: */
   const navigationSection = locale === fallbackLng ? 'Navigate' : 'Naviguer'
-  return (
-    <KBarSearchProvider
-      kbarConfig={{
-        searchDocumentsPath: 'search.json',
-        /* issue when using regular translations, this is a workaround to show how to implement translated menu titles */
-        defaultActions: [
-          {
-            id: 'home',
-            name: locale === fallbackLng ? 'Home' : 'Accueil',
-            keywords: '',
-            shortcut: ['h'],
-            section: navigationSection,
-            perform: () => router.push(`/${locale}`),
-            icon: (
-              <i>
-                <HomeIcon />
-              </i>
-            ),
-          },
-          {
-            id: 'blog',
-            name: locale === fallbackLng ? 'Blog' : 'Blog',
-            keywords: '',
-            shortcut: ['b'],
-            section: navigationSection,
-            perform: () => router.push(`/${locale}/blog`),
-            icon: (
-              <i>
-                <BlogIcon />
-              </i>
-            ),
-          },
-          {
-            id: 'tags',
-            name: locale === fallbackLng ? 'Tags' : 'Tags',
-            keywords: '',
-            shortcut: ['t'],
-            section: navigationSection,
-            perform: () => router.push(`/${locale}/tags`),
-            icon: (
-              <i>
-                <TagsIcon />
-              </i>
-            ),
-          },
-          {
-            id: 'projects',
-            name: locale === fallbackLng ? 'Projects' : 'Projets',
-            keywords: '',
-            shortcut: ['p'],
-            section: navigationSection,
-            perform: () => router.push(`/${locale}/projects`),
-            icon: (
-              <i>
-                <ProjectsIcon />
-              </i>
-            ),
-          },
-          ...authorsActions,
-        ],
-        onSearchDocumentsLoad(json) {
-          return json
-            .filter((post: CoreContent<Blog>) => post.language === locale)
-            .map((post: CoreContent<Blog>) => ({
-              id: post.path,
-              name: post.title,
-              keywords: post?.summary || '',
-              section: t('content'),
-              subtitle: post.tags.join(', '),
-              perform: () => router.push(`/${locale}/blog/${post.slug}`),
-            }))
-        },
-      }}
-    >
-      {children}
-    </KBarSearchProvider>
-  )
+  return <SearchProvider>{children}</SearchProvider>
 }
 ```
 

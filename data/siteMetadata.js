@@ -23,8 +23,8 @@ const siteMetadata = {
   multiauthors: true,
 
   search: {
-    provider: 'kbar', // kbar or algolia
-    kbarConfig: {
+    provider: 'local', // local or algolia
+    local: {
       searchDocumentsPath: 'search.json', // path to load documents to search
     },
   }

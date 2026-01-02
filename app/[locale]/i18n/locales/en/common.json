@@ -10,7 +10,7 @@
   "scrolltop": "Scroll to top",
   "darkmode": "Toggle dark mode",
   "content": "Content",
-  "kbarplaceholder": "Type a command or search",
+  "searchplaceholder": "Search posts or authors",
   "loading": "Loading...",
   "noresults": "No results for your search...",
   "poststagged": "View posts tagged",
