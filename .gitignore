@@ -47,4 +47,4 @@ yarn-error.log*
 # Contentlayer
 .contentlayer
 *.obsidian/
-app/\[locale]/tag-data.json
+app/[locale]/tag-data.json
