@@ -1,0 +1,29 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+import { getPosts } from '../../lib/posts';
+import { useTranslations } from '../../i18n/utils';
+import type { Lang } from '../../i18n/ui';
+
+export function getStaticPaths() {
+  return [{ params: { lang: 'de' } }, { params: { lang: 'en' } }];
+}
+
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+const posts = await getPosts(lang);
+---
+
+<BaseLayout title="COMSTOCK Projects" description={t('home.tagline')}>
+  <section class="mb-10">
+    <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">COMSTOCK Projects</h1>
+    <p class="mt-2 text-lg text-[var(--fg-muted)]">{t('home.tagline')}</p>
+  </section>
+
+  <h2 class="mb-2 text-sm font-semibold uppercase tracking-wide text-[var(--fg-muted)]">
+    {t('post.allPosts')}
+  </h2>
+  <div>
+    {posts.map((post) => <PostCard post={post} lang={lang} />)}
+  </div>
+</BaseLayout>

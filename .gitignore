@@ -1,50 +1,15 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+comstockch.code-workspace
 
+# build output
+dist/
+# generated types
+.astro/
 # dependencies
-/node_modules
-/.pnp
-.pnp.js
-/.yarn/*
-!/.yarn/releases
-!/.yarn/plugins
-!/.yarn/sdks
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-public/sitemap.xml
-.vercel
-
-# production
-/build
-*.xml
-
-# rss feed
-/public/feed.xml
-
-# search
-/public/search.json
-
-# misc
-.DS_Store
-
-# debug
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# local env files
+node_modules/
+# logs
+*-debug.log*
+# environment variables
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Contentlayer
-.contentlayer
-*.obsidian/
-app/[locale]/tag-data.json
+.env.production
+# os / editor
+.DS_Store

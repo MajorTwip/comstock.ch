@@ -1,45 +1,19 @@
-# Stage 1: Build the Next.js application
-
+# Stage 1: Build the static Astro site (astro build + pagefind index)
 FROM node:24-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files and install dependencies
-COPY package.json package-lock.json ./ 
-COPY scripts ./scripts
+COPY package.json package-lock.json ./
 RUN npm ci
 
-# Copy application code
 COPY . .
-
-# Build the Next.js application
 RUN npm run build
 
-# Stage 2: Run the application
-FROM node:24-alpine AS runner
+# Stage 2: Serve the static output with nginx
+FROM nginx:1.27-alpine AS runner
 
-WORKDIR /app
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Set to production environment
-ENV NODE_ENV=production
-
-# Create a non-root user
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
-
-# Copy necessary files from the builder stage
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-
-# Set proper permissions
-RUN chown -R nextjs:nodejs /app
-
-# Switch to non-root user
-USER nextjs
-
-# Expose the port the app will run on
-EXPOSE 3000
-
-# Define the command to run the app
-CMD ["node", "server.js"]
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

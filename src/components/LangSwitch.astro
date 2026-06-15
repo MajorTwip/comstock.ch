@@ -1,0 +1,34 @@
+---
+import { languages, type Lang } from '../i18n/ui';
+import { getLangFromUrl } from '../i18n/utils';
+
+const current = getLangFromUrl(Astro.url);
+
+// Swap the leading locale segment, keeping the rest of the path (slugs are shared).
+function urlFor(lang: Lang): string {
+  const parts = Astro.url.pathname.split('/');
+  parts[1] = lang; // [ "", "de", ...rest ]
+  const p = parts.join('/');
+  return p === `/${lang}` ? `/${lang}/` : p;
+}
+---
+
+<div class="flex items-center gap-1 text-sm">
+  {
+    (Object.keys(languages) as Lang[]).map((lang) => (
+      <a
+        href={urlFor(lang)}
+        hreflang={lang}
+        class:list={[
+          'rounded px-2 py-1 uppercase',
+          lang === current
+            ? 'font-semibold text-[var(--fg)]'
+            : 'text-[var(--fg-muted)] hover:text-[var(--fg)]',
+        ]}
+        aria-current={lang === current ? 'true' : undefined}
+      >
+        {lang}
+      </a>
+    ))
+  }
+</div>

@@ -1,0 +1,63 @@
+---
+title: Diese Seite neu gebaut – mit Claude Code für 10 USD
+date: 2026-06-15
+authors:
+  - MajorTwip
+language: de
+tags:
+  - it
+  - astro
+  - ki
+image: ./assets/hero.png
+summary: Letztes Jahr habe ich die Seite auf Next.js migriert. Jetzt läuft sie auf Astro – und diesmal hat den Grossteil der Arbeit Claude Code erledigt. Für rund 10 USD an Tokens.
+---
+
+## Rückblick
+
+Letztes Jahr habe ich [meine Website auf Next.js migriert](/de/blog/erstellungwebpage/). Das hat funktioniert, aber so richtig glücklich wurde ich nie damit. Der Build warf dutzende Deprecation-Warnings, das verwendete Template wurde kaum noch weiterentwickelt, und für ein simples, statisches Blog fühlte sich Next.js schlicht zu schwer an.
+
+## Warum nochmal alles neu?
+
+Ich wollte zurück zum ursprünglichen Ziel: reproduzierbar, statisch, minimalistisch, dumm. Kein Server, kein React-Overhead auf jeder Seite, nur dort wo es wirklich nötig ist.
+
+[Astro](https://astro.build) passt da deutlich besser:
+
+- echtes SSG, der Output ist nacktes HTML
+- Content Collections statt Contentlayer
+- eingebaute Mehrsprachigkeit (DE/EN)
+- JavaScript nur als "Insel", wo ich es brauche (z.B. die Galerie)
+
+## Der eigentliche Twist: Claude Code
+
+Statt das alles selbst Zeile für Zeile umzubauen, habe ich es **Claude Code** überlassen – das Kommandozeilen-Tool von Anthropic. Ich habe ihm den Link zum alten Repo gegeben und die Anforderungen genannt (SSG, Dark-/Lightmode, zweisprachig, Markdown-Blog, Suche). Den Rest hat es weitgehend selbst erarbeitet:
+
+```text
+> Migrate my webpage to Astro.
+  - SSG, JS, Dark/lightmode
+  - Bilingual (DE/EN)
+  - Blogstyle with Markdown
+  - Search
+```
+
+Es hat das alte Repo analysiert, ein frisches Astro-Projekt aufgesetzt und – das fand ich am spannendsten – ein **eigenes Migrations-Skript** geschrieben, das den ganzen alten Content ins neue Format überführt.
+
+## Was es übernommen hat
+
+- **31 Beiträge in DE und EN**, automatisch ins neue Format: ein Ordner pro Beitrag mit `de.mdx`, `en.mdx` und einem `assets/`-Ordner.
+- **80 Bilder** automatisch zu WebP optimiert, alle Bildreferenzen umgeschrieben.
+- Meine **Obsidian-Embeds** (`![[bild.png]]`) funktionieren weiterhin – dafür wurde das alte Remark-Plugin portiert.
+- Die **Galerie/Lightbox** läuft als React-Insel, der Rest ist statisch.
+- **Dark-/Lightmode**, Sprachumschalter und eine **Suche als Modal** (Pagefind).
+
+> [!NOTE]
+> Mein Lieblings-Detail: Beim Code-Highlighting fehlten in den deutschen Beiträgen die Sprach-Tags an den Codeblöcken. Das Skript hat sie kurzerhand aus der englischen Übersetzung übernommen, weil der Code ja identisch ist.
+
+## Was es gekostet hat
+
+Unterm Strich rund **10 USD an Tokens**. Für eine komplette Migration inklusive Skripten, neuem Layout, Suche und diesem Bild hier ist das erstaunlich wenig – günstiger als ein Abend Handarbeit, und ich habe nebenbei einiges über Astro gelernt.
+
+## Fazit
+
+Ich bin ehrlich beeindruckt. Man darf das Ganze nicht blind laufen lassen – ich musste wissen was ich will, gegenlesen und an ein paar Stellen nachschärfen (Kontrast im Such-Modal, eine SVG die der Bild-Optimizer nicht mochte). Aber das Grundgerüst stand erstaunlich schnell.
+
+Tags und die Projektseite habe ich bewusst (noch) weggelassen. Die kommen vielleicht später – vielleicht auch wieder mit etwas Hilfe.

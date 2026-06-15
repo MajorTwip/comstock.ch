@@ -1,0 +1,31 @@
+---
+import { getLangFromUrl, useTranslations } from '../i18n/utils';
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+---
+
+<!-- Pagefind Component UI (generated into /pagefind at build; replaces the deprecated Default UI) -->
+<link rel="stylesheet" href="/pagefind/pagefind-component-ui.css" />
+<script is:inline type="module" src="/pagefind/pagefind-component-ui.js"></script>
+
+<pagefind-modal
+  id="search-modal"
+  lang={lang}
+  placeholder={t('search.placeholder')}
+  label={t('search.title')}
+></pagefind-modal>
+
+<script is:inline>
+  // Open the modal via its public .open() method (the trigger element's openModal lives elsewhere).
+  function openSearch() {
+    const m = document.getElementById('search-modal');
+    if (m && typeof m.open === 'function') m.open();
+  }
+  document.querySelectorAll('[data-open-search]').forEach((btn) => btn.addEventListener('click', openSearch));
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      openSearch();
+    }
+  });
+</script>

@@ -1,0 +1,22 @@
+---
+import { getLangFromUrl, useTranslations } from '../i18n/utils';
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const year = new Date().getFullYear();
+
+const social = [
+  { href: 'https://github.com/MajorTwip', label: 'GitHub' },
+  { href: 'https://www.youtube.com/@majortwip', label: 'YouTube' },
+  { href: 'https://www.instagram.com/comstockprojects/', label: 'Instagram' },
+  { href: 'https://www.threads.com/@comstockprojects', label: 'Threads' },
+];
+---
+
+<footer class="mt-16 border-t border-[var(--border)]">
+  <div class="mx-auto flex max-w-3xl flex-col items-center gap-3 px-4 py-8 text-sm text-[var(--fg-muted)]">
+    <div class="flex flex-wrap justify-center gap-4">
+      {social.map((s) => <a href={s.href} class="hover:text-[var(--brand)]" rel="me">{s.label}</a>)}
+    </div>
+    <p>© {year} COMSTOCK · MajorTwip · {t('footer.rights')}</p>
+  </div>
+</footer>

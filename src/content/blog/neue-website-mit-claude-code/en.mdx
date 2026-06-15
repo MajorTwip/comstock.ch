@@ -1,0 +1,63 @@
+---
+title: Rebuilt this site — with Claude Code for 10 USD
+date: 2026-06-15
+authors:
+  - MajorTwip
+language: en
+tags:
+  - it
+  - astro
+  - ai
+image: ./assets/hero.png
+summary: Last year I migrated the site to Next.js. Now it runs on Astro — and this time most of the work was done by Claude Code. For about 10 USD in tokens.
+---
+
+## Looking back
+
+Last year I [migrated my website to Next.js](/en/blog/erstellungwebpage/). It worked, but I was never really happy with it. The build threw dozens of deprecation warnings, the template I used was barely maintained anymore, and for a simple static blog Next.js just felt too heavy.
+
+## Why rebuild everything again?
+
+I wanted to get back to the original goal: reproducible, static, minimalistic, dumb. No server, no React overhead on every page — only where it's actually needed.
+
+[Astro](https://astro.build) fits that far better:
+
+- true SSG, the output is plain HTML
+- Content Collections instead of Contentlayer
+- built-in multilingual support (DE/EN)
+- JavaScript only as an "island" where I want it (e.g. the gallery)
+
+## The actual twist: Claude Code
+
+Instead of rebuilding all of this line by line myself, I handed it to **Claude Code** — Anthropic's command-line tool. I gave it the link to the old repo and listed my requirements (SSG, dark/light mode, bilingual, Markdown blog, search). It worked out most of the rest on its own:
+
+```text
+> Migrate my webpage to Astro.
+  - SSG, JS, Dark/lightmode
+  - Bilingual (DE/EN)
+  - Blogstyle with Markdown
+  - Search
+```
+
+It analyzed the old repo, scaffolded a fresh Astro project and — the part I found most impressive — wrote its **own migration script** that converts all the old content into the new format.
+
+## What it carried over
+
+- **31 posts in DE and EN**, automatically converted: one folder per post with `de.mdx`, `en.mdx` and an `assets/` folder.
+- **80 images** automatically optimized to WebP, all image references rewritten.
+- My **Obsidian embeds** (`![[image.png]]`) still work — the old remark plugin was ported for that.
+- The **gallery/lightbox** runs as a React island, everything else stays static.
+- **Dark/light mode**, a language switcher and **search as a modal** (Pagefind).
+
+> [!NOTE]
+> My favourite detail: for code highlighting, the German posts were missing the language tags on their code blocks. The script simply copied them over from the English translation, since the code is identical anyway.
+
+## What it cost
+
+All in all, about **10 USD in tokens**. For a full migration including scripts, a new layout, search and this very image, that's surprisingly little — cheaper than an evening of manual work, and I learned a fair bit about Astro along the way.
+
+## Verdict
+
+I'm genuinely impressed. You can't just let it run blindly — I had to know what I wanted, review the output and sharpen a few things (contrast in the search modal, an SVG the image optimizer didn't like). But the foundation came together remarkably fast.
+
+I deliberately left out tags and the projects page (for now). Those might come later — maybe with a bit of help again, too.

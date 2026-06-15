@@ -1,0 +1,105 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+@import 'katex/dist/katex.min.css';
+
+/* Class-based dark mode: ThemeToggle toggles `.dark` on <html>. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  /* palette — https://coolors.co/0b0033-370031-832232-ffdde2-eff9f0 */
+  --c-indigo: #0b0033;
+  --c-plum: #370031;
+  --c-maroon: #832232;
+  --c-pink: #ffdde2;
+  --c-mint: #eff9f0;
+
+  /* semantic tokens — light mode */
+  --bg: var(--c-mint);
+  --surface: #ffffff;
+  --chip: var(--c-pink);
+  --border: rgba(11, 0, 51, 0.14);
+  --fg: var(--c-indigo);
+  --fg-muted: rgba(11, 0, 51, 0.62);
+  --brand: var(--c-maroon);
+  --brand-hover: #6a1b28;
+}
+
+html.dark {
+  /* semantic tokens — dark mode (maroon lightened to a rose for contrast) */
+  --bg: var(--c-indigo);
+  --surface: var(--c-plum);
+  --chip: rgba(255, 221, 226, 0.12);
+  --border: rgba(255, 221, 226, 0.16);
+  --fg: var(--c-mint);
+  --fg-muted: rgba(239, 249, 240, 0.68);
+  /* link/accent: the favicon's vermilion (#b92701), lightened to #e8462a for AA contrast on indigo */
+  --brand: #e8462a;
+  --brand-hover: #fb6b3a;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Autolinked heading anchors (rehype-autolink-headings, behavior: prepend) */
+.content-header-link {
+  margin-left: -1.1em;
+  padding-right: 0.25em;
+  opacity: 0;
+  text-decoration: none;
+}
+.content-header-link::before {
+  content: '#';
+  color: var(--brand);
+}
+:is(h1, h2, h3, h4):hover .content-header-link {
+  opacity: 1;
+}
+
+/* GitHub-style alerts (remark-github-blockquote-alert) */
+.markdown-alert {
+  border-left: 0.25rem solid var(--alert, #888);
+  padding: 0.5rem 1rem;
+  margin: 1rem 0;
+  border-radius: 0.25rem;
+}
+.markdown-alert-title {
+  font-weight: 600;
+  text-transform: capitalize;
+}
+.markdown-alert-note { --alert: #539bf5; }
+.markdown-alert-tip { --alert: #57ab5a; }
+.markdown-alert-warning { --alert: #c69026; }
+.markdown-alert-important { --alert: #986ee2; }
+.markdown-alert-caution { --alert: #e5534b; }
+
+/* Light/dark Shiki code blocks follow the theme class */
+html.dark .astro-code,
+html.dark .astro-code span {
+  color: var(--shiki-dark) !important;
+  background-color: var(--shiki-dark-bg) !important;
+}
+.astro-code {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+}
+
+/* Pagefind Component UI theming (--pf-* hooks), mapped to the site palette */
+pagefind-modal,
+pagefind-searchbox {
+  --pf-background: var(--surface);
+  --pf-text: var(--fg);
+  --pf-text-secondary: var(--fg-muted);
+  --pf-text-muted: var(--fg-muted);
+  --pf-border: var(--border);
+  --pf-border-focus: var(--brand);
+  --pf-outline-focus: var(--brand);
+  --pf-hover: var(--chip);
+  --pf-mark: var(--brand);
+  --pf-modal-backdrop: rgba(11, 0, 51, 0.55);
+}
+html.dark pagefind-modal,
+html.dark pagefind-searchbox {
+  --pf-background: #160a2e; /* indigo/plum blend — readable modal surface */
+}

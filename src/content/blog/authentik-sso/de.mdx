@@ -1,0 +1,55 @@
+---
+title: Authentik als SSO und Security Gateway
+date: 2026-01-26
+tags:
+  - IT
+  - Infrastructure
+authors:
+  - MajorTwip
+language: de
+summary: Von Aussen sollen nur die wichtigsten Dienste erreichbar sein. Die anderen werden durch Traefik abgesichert. Zudem dient Authentik als Identity Provider für SSO
+draft: false
+image: ./assets/authentik-sso-1.png
+---
+
+## Ausgangslage
+Neben dieser Website laufen bei mir diverse weitere Dienste.  Portainer zum Docker-Management, IPAM, Grafana etc werden nur durch mich genutzt und können somit problemlos hinter einem VPN geschützt werden. In Immich und Paperless will ich aber Dinge freigeben können, diese werden aber aktiv entwickelt und ich hoffe diese sind entsprechend sicher. Wieder anderen vertraue ich weniger, und ausgerechnet im Stammbaum-Tool sind ja doch auch besonders schützenswerte Daten. 
+Somit soll das hinter eine 2FA.
+
+## Komponenten
+Als Reverse Proxy nutze isch schön länger Traefik. Dieses wiederum kann mittel ForwardAuth an Authentik gebunden werden. All dies läuft auf Docker, wenn auch nicht auf dem selben.
+
+### Einrichten von Authentik
+Grundsätzlich nutze ich die offizielle [Doku von Authentik](https://docs.goauthentik.io/install-config/install/docker-compose/)
+Allerdings mit wenigen Anpassungen am docker compose:
+```yaml
+services:
+  server:
+    labels:
+	    # Labels to make authentik availlable via traefik
+      - traefik.enable=true
+      - traefik.http.routers.idp.entrypoints=https
+      - 'traefik.http.routers.idp.rule=Host("<fqdn from authentik>")'
+      - traefik.http.routers.idp.tls=true
+    volumes:
+	    # Saving data to lacal filesystem
+      - /docker/authentik/media:/media
+      - /docker/authentik/custom-templates:/templates
+    env_file:
+	    # has to be modified like this to be used in Portainer
+      - stack.env
+    ports:
+	    # Removed fixed ports, given that the access will be done via traefik
+      - "9000"
+      - "9443"
+```
+
+### Konfiguration des Outposts
+Hierbei möchte ich gerne die Lorbeeren demjenigen übergeben, welchem sie gebühren.
+Im Tutorial von [simplehomelab.com](https://www.simplehomelab.com/udms-21-authentik-docker-compose/) ziemlich weit unten findet sich das Kapitel "Authentik Configuration" welches mit einem Haufen Screenshots alles erklärt.
+
+### Einrichtung von Traefik
+Oh es wird kompliziert. Nicht die Konfiguration von Traefik, sonder mein Setup. Ich nutzte zwei verschiedene Traefik-Instanzen. Eine auf dem primären Dockerhost welche über die Labels der Container konfiguriert wird und Zertifikate meiner eigenen Certificate Authority liefert. Eine Internet-Seitige welche Zertifikate von LetsEncrypt liefert und nur die von Aussen erreichbaren Dienste durchroutet. Dies konfiguriere ich mittels File Provider. 
+Diese äussere Instanz ist ganz simpel nach der [Doku von Authentik](https://docs.goauthentik.io/add-secure-apps/providers/proxy/server_traefik/) eingerichtet, gemäss dem Tab "Standalone", nur halt ohne Port, respektive dem Port 443.
+
+![[authentik-sso-1.png]]

@@ -1,0 +1,35 @@
+---
+title: Ein herzlicher Gamepad
+date: 2021-03-14
+tags:
+  - elektronik
+authors:
+  - MajorTwip
+language: de
+image: ./assets/JPEG_20190418_093518-scaled.jpg
+summary: Ein befreundetes Päärchen hat ihre bevorstehende Hochzeit angekündigt. Beide sind Gamer, was könnte man da wohl schenken? Ein Gamepad für 2 in Herzform!
+---
+
+import Gallery from '@/components/Gallery';
+import gal0 from './assets/JPEG_20190418_093518-1024x768.jpg';
+import gal1 from './assets/20190417_204649-1024x576.jpg';
+import gal2 from './assets/20190417_204643-1024x576.jpg';
+import gal3 from './assets/20190417_194640-1024x576.jpg';
+import gal4 from './assets/20190417_154728-1024x576.jpg';
+import gal5 from './assets/20190417_153333-1024x576.jpg';
+
+Ein befreundetes Päärchen hat ihre bevorstehende Hochzeit angekündigt. Beide sind Gamer, was könnte man da wohl schenken? Ein Gamepad für 2 in Herzform!
+
+Als Basis habe ich eine billige USB-Tastatur auseinandergerupft. Nach einer kurzen Analyse des flexiblen PCB hat sich gezeigt, dass die Tasten in einer Matrix angeordnet sind, wobei die "Zeilen" und "Spalten" bequemerweise auch auf dem Breakout-Board um ein paar mm getrennt sind. Durch probieren habe ich eine 4x4-Sub-Matrix gefunden, welche nur "Standarttasten" enthält, also keine F-Tasten o. Ä.
+
+Der Rest war Styrofoam schnitzen, Tasten einschrauben, löten und Plüsch aufleimen. Zeitaufwand: ca 2h
+
+<Gallery client:visible slides = {[
+  { src: gal0.src, width: 1024, height: 478 },
+  { src: gal1.src, width: 1024, height: 478 },
+  { src: gal2.src, width: 1024, height: 478 },
+  { src: gal3.src, width: 1024, height: 478 },
+  { src: gal4.src, width: 1024, height: 478 },
+  { src: gal5.src, width: 1024, height: 478 },
+]} />
+]
