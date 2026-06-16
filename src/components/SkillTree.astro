@@ -1,0 +1,80 @@
+---
+import type { Lang } from '../i18n/ui';
+import { useTranslations } from '../i18n/utils';
+import { layoutTree, type SkillTree } from '../lib/skills';
+
+interface Props {
+  entry: SkillTree;
+  lang: Lang;
+  published: Map<string, Set<Lang>>;
+}
+
+const { entry, lang, published } = Astro.props;
+const t = useTranslations(lang);
+const layout = layoutTree(entry, lang, published);
+const { width, height } = layout;
+const CARD_W = 140;
+---
+
+<section class="mb-14">
+  <header class="mb-4 border-y border-[var(--skill-accent)]/40 py-2">
+    <div class="flex flex-wrap items-baseline justify-between gap-2">
+      <h2 class="text-2xl font-bold tracking-tight text-[var(--skill-accent)]">{entry.data.title[lang]}</h2>
+      <span class="text-sm font-medium text-[var(--fg-muted)]">
+        {layout.done}/{layout.total} {t('skills.done')}
+      </span>
+    </div>
+    {entry.data.goal && <p class="mt-1 text-[var(--fg-muted)]">{entry.data.goal[lang]}</p>}
+    <div class="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[var(--chip)]">
+      <div
+        class="h-full rounded-full bg-[var(--skill-accent)] transition-all"
+        style={`width:${layout.total ? (layout.done / layout.total) * 100 : 0}%`}
+      >
+      </div>
+    </div>
+  </header>
+
+  <div class="overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--bg)] px-2 py-3">
+    <div class="skill-canvas relative mx-auto" style={`width:${width}px;height:${height}px;`}>
+      <svg
+        class="absolute inset-0 h-full w-full"
+        viewBox={`0 0 ${width} ${height}`}
+        fill="none"
+        aria-hidden="true"
+      >
+        {
+          layout.edges.map((e) => (
+            <path
+              class={e.done ? 'skill-edge skill-edge-done' : 'skill-edge'}
+              d={`M ${e.x1} ${e.y1} V ${(e.y1 + e.y2) / 2} H ${e.x2} V ${e.y2}`}
+            />
+          ))
+        }
+      </svg>
+
+      {
+        layout.nodes.map((n) => {
+          const icon = { done: '✓', available: '✦', locked: '🔒' }[n.state];
+          const cls = `skill-node skill-${n.state} absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1`;
+          const style = `left:${n.x}px;top:${n.y}px;width:${CARD_W}px;`;
+          const body = (
+            <>
+              <span class="skill-icon" aria-hidden="true">{icon}</span>
+              <span class="skill-label">{n.title}</span>
+              {n.desc && <span class="skill-desc">{n.desc}</span>}
+            </>
+          );
+          return n.state === 'done' && n.href ? (
+            <a href={n.href} class={cls} style={style} title={t('skills.readPost')}>
+              {body}
+            </a>
+          ) : (
+            <div class={cls} style={style} title={n.state === 'locked' ? t('skills.locked') : t('skills.available')}>
+              {body}
+            </div>
+          );
+        })
+      }
+    </div>
+  </div>
+</section>

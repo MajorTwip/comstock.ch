@@ -26,7 +26,7 @@
 
 html.dark {
   /* semantic tokens — dark mode (maroon lightened to a rose for contrast) */
-  --bg: var(--c-indigo);
+  --bg: #050014; /* much darker than the indigo palette base, keeps a faint indigo tint */
   --surface: var(--c-plum);
   --chip: rgba(255, 221, 226, 0.12);
   --border: rgba(255, 221, 226, 0.16);
@@ -83,6 +83,107 @@ html.dark .astro-code span {
   padding: 1rem;
   border-radius: 0.5rem;
   overflow-x: auto;
+}
+
+/* Skill tree — ATLAS-style: dark board, square icon tiles with cyan labels,
+   thin right-angle connectors. A scoped cyan accent (not the maroon --brand). */
+:root {
+  --skill-accent: #1f7fc2; /* light mode: a readable blue */
+  --skill-line: var(--border);
+  --skill-tile: color-mix(in srgb, var(--fg) 5%, var(--bg));
+}
+html.dark {
+  --skill-accent: #38bdf8; /* cyan, like the in-game labels */
+  --skill-line: rgba(255, 255, 255, 0.16);
+  --skill-tile: rgba(255, 255, 255, 0.035);
+}
+
+.skill-canvas {
+  background: radial-gradient(
+    120% 70% at 50% 0%,
+    color-mix(in srgb, var(--skill-accent) 7%, transparent),
+    transparent 65%
+  );
+}
+
+/* Connectors */
+.skill-edge {
+  fill: none;
+  stroke: var(--skill-line);
+  stroke-width: 1.5;
+}
+.skill-edge-done {
+  stroke: var(--skill-accent);
+  stroke-width: 2;
+  filter: drop-shadow(0 0 3px var(--skill-accent));
+}
+
+/* Node = square icon tile + label beneath */
+.skill-node {
+  text-decoration: none;
+}
+.skill-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.375rem;
+  border: 1.5px solid var(--skill-line);
+  background: var(--skill-tile);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+  font-size: 1rem;
+  transition: box-shadow 0.18s, border-color 0.18s, background 0.18s;
+}
+.skill-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--skill-accent);
+}
+.skill-desc {
+  font-size: 0.68rem;
+  color: var(--fg-muted);
+}
+
+.skill-done .skill-icon {
+  border-color: var(--skill-accent);
+  background: color-mix(in srgb, var(--skill-accent) 18%, var(--bg));
+  color: var(--skill-accent);
+  box-shadow: 0 0 12px -2px var(--skill-accent), inset 0 0 8px -3px var(--skill-accent);
+}
+a.skill-node:hover .skill-icon {
+  box-shadow: 0 0 18px -1px var(--skill-accent);
+}
+a.skill-node:hover .skill-label {
+  text-decoration: underline;
+}
+
+.skill-available .skill-icon {
+  border-color: color-mix(in srgb, var(--skill-accent) 55%, var(--skill-line));
+  color: color-mix(in srgb, var(--skill-accent) 70%, var(--fg));
+  animation: skill-pulse 2.6s ease-in-out infinite;
+}
+.skill-available .skill-label {
+  color: color-mix(in srgb, var(--skill-accent) 65%, var(--fg-muted));
+}
+
+.skill-locked {
+  opacity: 0.5;
+}
+.skill-locked .skill-label {
+  color: var(--fg-muted);
+}
+.skill-locked .skill-icon {
+  filter: grayscale(1);
+}
+
+@keyframes skill-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--skill-accent) 45%, transparent); }
+  50% { box-shadow: 0 0 0 4px transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skill-available .skill-icon { animation: none; }
 }
 
 /* Pagefind Component UI theming (--pf-* hooks), mapped to the site palette */

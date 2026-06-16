@@ -1,0 +1,50 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SkillTree from '../../components/SkillTree.astro';
+import { getSkillTrees, getPublishedSlugs } from '../../lib/skills';
+import { useTranslations } from '../../i18n/utils';
+import type { Lang } from '../../i18n/ui';
+
+export function getStaticPaths() {
+  return [{ params: { lang: 'de' } }, { params: { lang: 'en' } }];
+}
+
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+
+const trees = await getSkillTrees();
+const published = await getPublishedSlugs();
+
+const legend = [
+  { state: 'skill-done', label: t('skills.done') },
+  { state: 'skill-available', label: t('skills.available') },
+  { state: 'skill-locked', label: t('skills.locked') },
+];
+---
+
+<BaseLayout title={`${t('skills.title')} · COMSTOCK`} description={t('skills.intro')}>
+  <section class="mb-8">
+    <div class="border-y-2 border-[var(--skill-accent)] py-3 text-center">
+      <h1 class="text-3xl font-bold tracking-tight text-[var(--skill-accent)] sm:text-4xl">{t('skills.title')}</h1>
+    </div>
+    <p class="mt-3 text-center text-lg text-[var(--fg-muted)]">{t('skills.intro')}</p>
+    <ul class="mt-4 flex flex-wrap justify-center gap-5 text-sm text-[var(--fg-muted)]">
+      {
+        legend.map((l) => (
+          <li class={`flex items-center gap-2 ${l.state}`}>
+            <span class="skill-icon" style="width:1.4rem;height:1.4rem;font-size:.7rem" aria-hidden="true" />
+            <span>{l.label}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  {
+    trees.length === 0 ? (
+      <p class="text-[var(--fg-muted)]">{t('skills.empty')}</p>
+    ) : (
+      trees.map((entry) => <SkillTree entry={entry} lang={lang} published={published} />)
+    )
+  }
+</BaseLayout>
