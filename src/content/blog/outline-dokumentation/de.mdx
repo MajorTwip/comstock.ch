@@ -1,0 +1,65 @@
+---
+title: Outline – Dokumentation im Browser
+date: 2026-07-05
+tags:
+  - IT
+  - Infrastructure
+authors:
+  - MajorTwip
+language: de
+summary: Dokumentation war nie meine Stärke. Für mein Storage- und Backup-Umbauprojekt (UnSyno) wollte ich das endlich ändern – mit Outline, SMTP über Gmail und SSO via Authentik.
+draft: false
+---
+
+## Ausgangslage
+
+Dokumentation war ehrlich gesagt nie meine liebste Aufgabe und wurde entsprechend vernachlässigt. Vor etwa zwei Jahren kam dann doch der Bedarf auf, meinen Fortschritt festzuhalten.
+
+Nach einigem Suchen landete ich bei [Obsidian](https://obsidian.md). Mit seinem riesigen Angebot an Plugins – und neuerdings den eingebauten "Bases" – wäre es nach wie vor mein klarer Favorit. Ich brauchte aber unbedingt eine Web-App, um auch von Systemen aus zugreifen zu können, auf denen ich keine Apps installieren und schon gar keine Synchronisation einrichten kann. Und um mit einem Freund und Mit-Hoster zusammenzuarbeiten, erwies sich [Outline](https://www.getoutline.com/) als die passendste Lösung.
+
+## Setup
+
+### Die Basis-App starten
+
+Als ersten Schritt liess ich Outline einfach mal laufen, indem ich in meinem Docker-Manager Arcane ein neues Projekt anlegte. Am mitgelieferten docker-compose.yml musste ich ein paar Dinge anpassen:
+
+- den kompletten nginx-Block entfernt und stattdessen folgende Labels ergänzt, damit Traefik routet:
+
+```yaml
+labels:
+  - traefik.enable=true
+  - traefik.http.routers.doc.rule=Host("doc.comstock.ch")
+  - traefik.http.routers.doc.tls=true
+```
+
+- die Images von `redis:8` auf `redis:8-alpine` und von `postgres:18` auf `postgres:18-alpine` gewechselt.
+
+In der mitgelieferten .env musste ich noch die URL korrigieren sowie `SECRET_KEY` und `UTILS_SECRET` gemäss der Beschreibung direkt über den jeweiligen Einträgen erzeugen.
+
+Outline bringt übrigens keine eigene Authentifizierung mit – eine Design-Entscheidung, die mir sehr gefällt, auch wenn ich verstehe, dass sie für manche eine Hürde darstellt. Zum Testen erstellte ich zunächst eine Google-App, bin mir aber nicht sicher, ob das für Leute ohne Google Workspace ein gangbarer Weg ist.
+
+### Google SMTP in Outline einrichten
+
+Das war ziemlich einfach, nachdem ich herausgefunden hatte, dass das App-Passwort **ohne Leerzeichen** eingetragen werden muss. Ich bin einfach auf [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords) gegangen und habe dort ein neues App-Passwort erstellt. Danach die .env angepasst:
+
+```ini
+SMTP_SERVICE=Gmail
+SMTP_USERNAME=meine-email@example.com
+SMTP_PASSWORD=dasapppasswortvonggl
+SMTP_FROM_EMAIL=Meine Doku <infra@example.com>
+```
+
+Auch wenn `infra@example.com` nur ein Alias meiner Google-Workspace-Adresse ist, kommen die Mails an – allerdings mit der Absenderadresse `meine-email@example.com`. Der Anzeigename "Meine Doku" hingegen wird korrekt übernommen. Wieso das eine funktioniert und das andere nicht, ist mir noch nicht ganz klar.
+
+### Outline an Authentik anbinden
+
+Hier bin ich einfach der Anleitung auf [integrations.goauthentik.io](https://integrations.goauthentik.io/documentation/outline/) gefolgt. Der Abschnitt "Create an email verification scope mapping in authentik" war wegen eines defekten Links in der Doku etwas tricky – über die Suche in der Authentik-Doku findet sich die benötigte Anleitung aber trotzdem.
+
+Trotzdem lief es zunächst überhaupt nicht … und die Logs waren auf den ersten Blick nicht sehr aufschlussreich. Dann kam mir der Geistesblitz: Ich nutze eine eigene Certificate Authority, die auf all meinen Geräten installiert ist. Nur eben nicht in den Docker-Containern.
+
+> [!WARNING]
+> Wer einen Identity Provider mit einem Zertifikat verwendet, das nicht von einer öffentlichen CA signiert ist, muss die eigene CA in den Container einbinden. Neue Zeile in der .env: `NODE_EXTRA_CA_CERTS=/var/lib/outline/data/ca.crt`
+
+## Fazit
+
+Outline lief so schon nach kurzer Zeit rund, und mit SMTP über Gmail sowie SSO über [Authentik](/de/blog/authentik-sso/).

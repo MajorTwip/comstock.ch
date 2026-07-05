@@ -1,0 +1,65 @@
+---
+title: Outline – Documentation in the Browser
+date: 2026-07-05
+tags:
+  - IT
+  - Infrastructure
+authors:
+  - MajorTwip
+language: en
+summary: Documentation was never my strong suit. For my storage and backup overhaul project (UnSyno) I finally wanted to fix that — with Outline, SMTP via Gmail, and SSO through Authentik.
+draft: false
+---
+
+## Starting point
+
+Documentation was, to be honest, never my favorite task and was neglected accordingly. About two years ago the need to actually track my progress came up.
+
+After looking around I settled on [Obsidian](https://obsidian.md). With its huge range of plugins — and, more recently, the built-in "Bases" — it would still be my clear favorite. But I badly needed a web app so I could access my notes from systems where I can't install apps, let alone set up any kind of synchronization. And to collaborate with a friend and fellow self-hoster, [Outline](https://www.getoutline.com/) turned out to be the best fit.
+
+## Setup
+
+### Getting the basic app running
+
+As a first step I just let it start once by creating a new project in my Docker manager, Arcane. I made a few changes to the provided docker-compose.yml:
+
+- removed the entire nginx block and added the following labels instead, to get it routed through Traefik:
+
+```yaml
+labels:
+  - traefik.enable=true
+  - traefik.http.routers.doc.rule=Host("doc.comstock.ch")
+  - traefik.http.routers.doc.tls=true
+```
+
+- switched the `redis:8` image to `redis:8-alpine` and `postgres:18` to `postgres:18-alpine`.
+
+In the provided .env I fixed the URL and generated `SECRET_KEY` and `UTILS_SECRET` as described directly above those entries.
+
+Outline doesn't ship its own authentication — a choice I really like, even though I understand it raises the bar for some people. Just to test things, I created a Google app, though I'm not sure that's a viable path for people without a Google Workspace.
+
+### Adding Google SMTP to Outline
+
+This turned out to be fairly easy once I discovered the app password has to go in **without spaces**. I just went to [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords), created a new app password, and updated the .env:
+
+```ini
+SMTP_SERVICE=Gmail
+SMTP_USERNAME=myemail@example.com
+SMTP_PASSWORD=theapppassfromggl
+SMTP_FROM_EMAIL=My Doc Name <infra@example.com>
+```
+
+Even though `infra@example.com` is just an alias of my Google Workspace address, mail still gets delivered — but with the sender address `myemail@example.com`. The display name "My Doc Name", on the other hand, comes through correctly. I'm not yet sure why one works and the other doesn't.
+
+### Adding Outline to Authentik
+
+I just followed the guide at [integrations.goauthentik.io](https://integrations.goauthentik.io/documentation/outline/). The part about "Create an email verification scope mapping in authentik" was a bit tricky because of a broken link in the docs — searching the Authentik docs directly turns up the guide you actually need.
+
+Even so, it just wouldn't work… and the logs weren't very illuminating at first glance. Then it clicked: I use my own Certificate Authority, installed on all my devices — but not inside the Docker containers.
+
+> [!WARNING]
+> When using an identity provider with a certificate not signed by a public CA, you need to add the custom CA into the container. New line in the .env: `NODE_EXTRA_CA_CERTS=/var/lib/outline/data/ca.crt`
+
+## Verdict
+
+Outline was running smoothly after a short while, and with SMTP via Gmail and SSO through [Authentik](/en/blog/authentik-sso/) it feels like a proper, cleanly integrated piece of infrastructure.

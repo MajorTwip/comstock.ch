@@ -63,7 +63,7 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" 
   <!-- right panel -->
   <g transform="translate(778,210)">
     <text font-family="sans-serif" font-size="22" fill="#c9aab5">Kosten / cost</text>
-    <text font-family="sans-serif" font-weight="800" font-size="120" fill="url(#accent)" y="118">≈ $10</text>
+    <text font-family="sans-serif" font-weight="800" font-size="100" fill="url(#accent)" y="118">≈ Fr. 30</text>
     <text font-family="sans-serif" font-size="24" fill="#d9c2cb" y="158">in Tokens</text>
 
     <g font-family="sans-serif" font-size="20" fill="#ead9df">
