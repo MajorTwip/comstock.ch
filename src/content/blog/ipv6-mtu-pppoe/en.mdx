@@ -1,0 +1,64 @@
+---
+title: IPv6 PMTU blackhole on a PPPoE uplink
+date: 2026-10-31
+tags:
+  - IT
+  - Infrastructure
+authors:
+  - MajorTwip
+language: en
+summary: Some websites hung over Wi-Fi but worked over mobile data. Cause was the 1492-byte MTU of the PPPoE uplink combined with missing MSS clamping for IPv6.
+draft: false
+---
+
+import diagram from './assets/mtu-pppoe-en.svg?url';
+
+## Symptom
+Video streams dropped out, pages loaded slowly, and some sites did not load at all over Wi-Fi. `pay.twint.ch` was a reproducible example. Over mobile data the same devices worked. Router load was low, DNS resolved correctly, and the logs showed no PPPoE reconnects.
+
+## Setup
+- Uplink: PPPoE over fibre, RouterOS 7 on a MikroTik CCR
+- LAN: several VLANs, UniFi access points, dual stack (IPv4 + IPv6 with prefix delegation)
+
+## Cause
+PPPoE adds an 8-byte header. On a 1500-byte Ethernet link this leaves an MTU of **1492** for the PPP session. The LAN runs at 1500.
+
+- **IPv4** was not affected. RouterOS clamps the TCP MSS on PPP links by default (`change-tcp-mss=yes` in the PPP profile).
+- **IPv6** had neither MSS clamping nor a reduced MTU in the router advertisements. Clients assumed 1500 and announced an MSS of 1440 in their SYN.
+
+The server then sent 1500-byte IPv6 packets. These do not fit into the 1492-byte PPPoE link. IPv6 routers do not fragment, so Path MTU Discovery depends on an ICMPv6 *Packet Too Big* reaching the server and being honoured. That did not happen. Small packets such as the TCP handshake got through, large ones such as the TLS certificate or video segments did not. The connection stalled.
+
+Happy Eyeballs partly hides the issue: after a timeout the client falls back to IPv4. The result is slowness rather than a clear error. Mobile data does not use PPPoE, so it was unaffected.
+
+<img src={diagram} alt="Packet sizes along the path client, router, ISP and server, before and after MSS clamping" />
+
+## Diagnosis
+On a client in the affected network:
+
+```bash
+curl -4 -sS -o NUL -w "%{http_code} %{time_total}s\n" https://pay.twint.ch
+curl -6 -sS -o NUL -w "%{http_code} %{time_total}s\n" https://pay.twint.ch
+```
+
+IPv4 answered immediately, IPv6 hung until the timeout.
+
+## Fix
+Clamp the MSS for IPv6 in both directions and announce the correct MTU in the router advertisements:
+
+```bash
+/ipv6 firewall mangle add chain=forward action=change-mss new-mss=clamp-to-pmtu protocol=tcp tcp-flags=syn out-interface=pppoe-out1
+/ipv6 firewall mangle add chain=forward action=change-mss new-mss=clamp-to-pmtu protocol=tcp tcp-flags=syn in-interface=pppoe-out1
+/ipv6 nd set [find interface~"VLAN"] mtu=1492
+```
+
+The clamp rewrites the MSS in the SYN from 1440 to 1432, so the server never sends more than 1492 bytes. The RA MTU makes clients size their own outbound packets correctly as well. Clients pick up the new RA MTU after reconnecting or with the next advertisement.
+
+## Alternative: RFC 4638
+With baby jumbo frames (Ethernet MTU 1508) the PPP session can carry a full 1500 bytes. This needs support from the ISP's BRAS and from every device between router and ISP:
+
+```bash
+/interface ethernet set combo1 mtu=1508
+/interface pppoe-client set pppoe-out1 max-mtu=1500 max-mru=1500
+```
+
+If `actual-mtu` on the PPPoE interface stays at 1492, the ISP did not accept it. The MSS clamp should stay in place either way. It costs nothing and covers a later fallback to 1492.

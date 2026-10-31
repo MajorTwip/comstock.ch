@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" width="960" height="470" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <defs>
+    <marker id="a-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0b0033"/></marker>
+    <marker id="a-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#832232"/></marker>
+    <marker id="a-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2f7d4f"/></marker>
+  </defs>
+
+  <rect x="0.5" y="0.5" width="959" height="469" rx="12" fill="#fbf7f8" stroke="#e6d5d9"/>
+
+  <!-- vertical guides -->
+  <g stroke="#d9cdd1" stroke-dasharray="3 5">
+    <line x1="105" y1="96" x2="105" y2="415"/>
+    <line x1="375" y1="96" x2="375" y2="415"/>
+    <line x1="615" y1="96" x2="615" y2="415"/>
+    <line x1="855" y1="96" x2="855" y2="415"/>
+  </g>
+
+  <!-- links -->
+  <line x1="170" y1="68" x2="300" y2="68" stroke="#0b0033" stroke-width="2"/>
+  <line x1="450" y1="68" x2="540" y2="68" stroke="#832232" stroke-width="5"/>
+  <line x1="690" y1="68" x2="790" y2="68" stroke="#0b0033" stroke-width="2"/>
+
+  <!-- nodes -->
+  <g fill="#ffffff" stroke="#0b0033" stroke-width="1.5">
+    <rect x="40" y="40" width="130" height="56" rx="8"/>
+    <rect x="300" y="40" width="150" height="56" rx="8"/>
+    <rect x="540" y="40" width="150" height="56" rx="8"/>
+    <rect x="790" y="40" width="130" height="56" rx="8"/>
+  </g>
+  <g fill="#0b0033" font-size="15" font-weight="600" text-anchor="middle">
+    <text x="105" y="64">Client</text>
+    <text x="375" y="64">Router</text>
+    <text x="615" y="64">Provider-BRAS</text>
+    <text x="855" y="64">Server</text>
+  </g>
+  <g fill="#5b5670" font-size="12" text-anchor="middle">
+    <text x="105" y="83">WLAN / LAN</text>
+    <text x="375" y="83">MikroTik CCR</text>
+    <text x="615" y="83">PPPoE</text>
+    <text x="855" y="83">CDN, IPv6</text>
+  </g>
+
+  <!-- link labels -->
+  <g font-size="12" text-anchor="middle">
+    <text x="235" y="118" fill="#5b5670">MTU 1500</text>
+    <text x="495" y="118" fill="#832232" font-weight="600">MTU 1492</text>
+    <text x="495" y="133" fill="#832232">(1500 − 8)</text>
+    <text x="740" y="118" fill="#5b5670">MTU 1500</text>
+  </g>
+
+  <!-- lane 1: before -->
+  <text x="40" y="168" fill="#832232" font-size="14" font-weight="700" stroke="#fbf7f8" stroke-width="6" stroke-linejoin="round" paint-order="stroke">Vorher: kein MSS-Clamping für IPv6</text>
+
+  <line x1="105" y1="198" x2="855" y2="198" stroke="#0b0033" stroke-width="1.5" marker-end="url(#a-ink)"/>
+  <text x="480" y="191" fill="#0b0033" font-size="12" text-anchor="middle">SYN · MSS 1440 (1500 − 40 − 20)</text>
+
+  <line x1="855" y1="238" x2="630" y2="238" stroke="#832232" stroke-width="2" marker-end="url(#a-bad)"/>
+  <text x="742" y="231" fill="#832232" font-size="12" text-anchor="middle">Daten, 1500 B</text>
+  <g stroke="#832232" stroke-width="3" stroke-linecap="round">
+    <line x1="607" y1="230" x2="623" y2="246"/>
+    <line x1="623" y1="230" x2="607" y2="246"/>
+  </g>
+  <text x="595" y="243" fill="#832232" font-size="12" text-anchor="end">passt nicht in 1492</text>
+
+  <line x1="615" y1="276" x2="855" y2="276" stroke="#832232" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#a-bad)"/>
+  <text x="735" y="269" fill="#832232" font-size="12" text-anchor="middle">ICMPv6 Packet Too Big</text>
+  <text x="735" y="293" fill="#5b5670" font-size="12" text-anchor="middle">nicht beachtet → Verbindung hängt</text>
+
+  <!-- lane 2: after -->
+  <text x="40" y="333" fill="#2f7d4f" font-size="14" font-weight="700" stroke="#fbf7f8" stroke-width="6" stroke-linejoin="round" paint-order="stroke">Nachher: clamp-to-pmtu + RA-MTU 1492</text>
+
+  <line x1="105" y1="363" x2="371" y2="363" stroke="#0b0033" stroke-width="1.5"/>
+  <line x1="379" y1="363" x2="855" y2="363" stroke="#0b0033" stroke-width="1.5" marker-end="url(#a-ink)"/>
+  <circle cx="375" cy="363" r="5" fill="#2f7d4f"/>
+  <text x="240" y="356" fill="#0b0033" font-size="12" text-anchor="middle">SYN · MSS 1440</text>
+  <text x="615" y="356" fill="#2f7d4f" font-size="12" font-weight="600" text-anchor="middle">SYN · MSS 1432</text>
+
+  <line x1="855" y1="400" x2="120" y2="400" stroke="#2f7d4f" stroke-width="2" marker-end="url(#a-ok)"/>
+  <text x="480" y="393" fill="#2f7d4f" font-size="12" text-anchor="middle">Daten, ≤ 1492 B</text>
+  <path d="M84,400 l7,7 l13,-14" fill="none" stroke="#2f7d4f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <text x="40" y="446" fill="#5b5670" font-size="12">MSS = MTU − 40 B IPv6-Header − 20 B TCP-Header. Bei IPv4: 1460 → 1452.</text>
+</svg>

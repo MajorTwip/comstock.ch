@@ -1,0 +1,64 @@
+---
+title: IPv6-PMTU-Blackhole an einem PPPoE-Anschluss
+date: 2026-10-31
+tags:
+  - IT
+  - Infrastructure
+authors:
+  - MajorTwip
+language: de
+summary: Einzelne Webseiten hingen über WLAN, über Mobilfunk funktionierten sie. Ursache war die MTU von 1492 Byte des PPPoE-Anschlusses zusammen mit fehlendem MSS-Clamping für IPv6.
+draft: false
+---
+
+import diagram from './assets/mtu-pppoe-de.svg?url';
+
+## Symptom
+Videostreams brachen ab, Seiten luden langsam, und einzelne Seiten luden über WLAN gar nicht. `pay.twint.ch` war ein reproduzierbares Beispiel. Über Mobilfunk funktionierten dieselben Geräte. Die Last auf dem Router war tief, DNS löste korrekt auf, und im Log gab es keine PPPoE-Reconnects.
+
+## Aufbau
+- Anschluss: PPPoE über Glasfaser, RouterOS 7 auf einem MikroTik CCR
+- LAN: mehrere VLANs, UniFi Access Points, Dual Stack (IPv4 + IPv6 mit Prefix Delegation)
+
+## Ursache
+PPPoE fügt einen Header von 8 Byte hinzu. Auf einem Ethernet-Link mit 1500 Byte bleibt für die PPP-Session eine MTU von **1492**. Das LAN läuft mit 1500.
+
+- **IPv4** war nicht betroffen. RouterOS passt die TCP-MSS auf PPP-Links standardmässig an (`change-tcp-mss=yes` im PPP-Profil).
+- **IPv6** hatte weder MSS-Clamping noch eine reduzierte MTU in den Router Advertisements. Die Clients gingen von 1500 aus und kündigten im SYN eine MSS von 1440 an.
+
+Der Server schickte darauf IPv6-Pakete mit 1500 Byte. Diese passen nicht durch den PPPoE-Link mit 1492 Byte. IPv6-Router fragmentieren nicht, Path MTU Discovery ist also darauf angewiesen, dass ein ICMPv6 *Packet Too Big* den Server erreicht und dort beachtet wird. Das geschah nicht. Kleine Pakete wie der TCP-Handshake kamen durch, grosse wie das TLS-Zertifikat oder Videosegmente nicht. Die Verbindung blieb hängen.
+
+Happy Eyeballs verdeckt das Problem teilweise: Nach einem Timeout weicht der Client auf IPv4 aus. Das Ergebnis ist Langsamkeit statt einer klaren Fehlermeldung. Mobilfunk verwendet kein PPPoE und war deshalb nicht betroffen.
+
+<img src={diagram} alt="Paketgrössen entlang des Pfads Client, Router, Provider und Server, vor und nach dem MSS-Clamping" />
+
+## Diagnose
+Auf einem Client im betroffenen Netz:
+
+```bash
+curl -4 -sS -o NUL -w "%{http_code} %{time_total}s\n" https://pay.twint.ch
+curl -6 -sS -o NUL -w "%{http_code} %{time_total}s\n" https://pay.twint.ch
+```
+
+IPv4 antwortete sofort, IPv6 hing bis zum Timeout.
+
+## Lösung
+MSS für IPv6 in beide Richtungen anpassen und die korrekte MTU in den Router Advertisements ankündigen:
+
+```bash
+/ipv6 firewall mangle add chain=forward action=change-mss new-mss=clamp-to-pmtu protocol=tcp tcp-flags=syn out-interface=pppoe-out1
+/ipv6 firewall mangle add chain=forward action=change-mss new-mss=clamp-to-pmtu protocol=tcp tcp-flags=syn in-interface=pppoe-out1
+/ipv6 nd set [find interface~"VLAN"] mtu=1492
+```
+
+Das Clamping schreibt die MSS im SYN von 1440 auf 1432 um, der Server schickt also nie mehr als 1492 Byte. Mit der MTU im RA dimensionieren auch die Clients ihre ausgehenden Pakete korrekt. Die Clients übernehmen die neue MTU nach einem Reconnect oder mit dem nächsten Advertisement.
+
+## Alternative: RFC 4638
+Mit Baby Jumbo Frames (Ethernet-MTU 1508) kann die PPP-Session volle 1500 Byte transportieren. Dazu müssen der BRAS des Providers und jedes Gerät zwischen Router und Provider mitspielen:
+
+```bash
+/interface ethernet set combo1 mtu=1508
+/interface pppoe-client set pppoe-out1 max-mtu=1500 max-mru=1500
+```
+
+Bleibt `actual-mtu` auf dem PPPoE-Interface bei 1492, hat der Provider es nicht akzeptiert. Das MSS-Clamping sollte so oder so bleiben. Es kostet nichts und fängt einen späteren Rückfall auf 1492 ab.
