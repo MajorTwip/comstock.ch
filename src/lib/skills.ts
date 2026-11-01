@@ -69,7 +69,8 @@ function hrefFor(
   const langs = published.get(node.post);
   if (!langs) return undefined;
   const target: Lang = langs.has(lang) ? lang : ([...langs][0] as Lang);
-  return `/${target}/blog/${node.post}/`;
+  const anchor = typeof node.anchor === 'string' ? node.anchor : node.anchor?.[target];
+  return `/${target}/blog/${node.post}/${anchor ? `#${anchor}` : ''}`;
 }
 
 /**

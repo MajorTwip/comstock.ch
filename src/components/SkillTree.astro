@@ -34,7 +34,15 @@ const CARD_W = 140;
     </div>
   </header>
 
-  <div class="overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--bg)] px-2 py-3">
+  <!--
+    A tree wider than the content column breaks out of it, centred on the column
+    and capped at the viewport (minus a 1rem gutter); beyond that it scrolls.
+    18px = px-2 padding + 1px borders on both sides.
+  -->
+  <div
+    class="relative left-1/2 -translate-x-1/2 overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--bg)] px-2 py-3"
+    style={`width:max(100%, min(${width + 18}px, calc(100vw - 2rem)));`}
+  >
     <div class="skill-canvas relative mx-auto" style={`width:${width}px;height:${height}px;`}>
       <svg
         class="absolute inset-0 h-full w-full"

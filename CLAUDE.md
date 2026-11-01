@@ -101,10 +101,27 @@ Search needs a built site (index in `dist/pagefind/`).
 
 ### Logo / header / navigation
 
-Header (`src/components/Header.astro`) shows `public/static/logo.svg` + wordmark. Nav is just
-**Home / About** plus the search button, language switcher, and theme toggle. There is no separate
+Header (`src/components/Header.astro`) shows `public/static/logo.svg` + wordmark. Nav is
+**Home / Project steps / About** plus the search button, language switcher, and theme toggle. There is no separate
 Blog page — **Home (`/[lang]/`) is the full post listing**. Individual posts still live at
 `/[lang]/blog/<slug>/`; the post footer's "all posts" link returns to Home.
+
+Header, main and footer share one column width (`max-w-4xl`); change all three together.
+
+### Project steps (skill tree)
+
+Shown to readers as "Projektschritte / Project steps" at `/[lang]/skills`; in code it is still the
+`skilltree` collection (`src/content/skilltree/<project>.md`, schema in `src/content.config.ts`,
+layout in `src/lib/skills.ts`, rendered by `src/components/SkillTree.astro`).
+
+- Each node: `id`, localized `title`/`desc`, `requires` (ids → DAG), optional `post` (blog slug),
+  optional `anchor` (heading id in that post — a string, or `{ de, en }` because rehype-slug ids
+  follow the translated heading text), optional `status: done | planned` overriding the default.
+- A node is done when its `post` is published (or `status: done`); only done nodes with a post link.
+- Embed one tree in a post: `import SkillTreeEmbed from '@/components/SkillTreeEmbed.astro';`
+  then `<SkillTreeEmbed project="weg-von-synology" lang="de" />`.
+- A tree wider than the content column breaks out of it, centred, up to the viewport width minus
+  a 1rem gutter, and scrolls horizontally beyond that.
 
 ## Deployment
 

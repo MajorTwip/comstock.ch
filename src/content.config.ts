@@ -44,6 +44,9 @@ const skilltree = defineCollection({
           desc: localized.optional(),
           requires: z.array(z.string()).default([]),
           post: z.string().optional(),
+          // Heading id inside that post (rehype-slug), localized when the
+          // heading text differs per language: "migrate-dns" or { de, en }.
+          anchor: z.union([z.string(), localized]).optional(),
           // Override the post-derived status when a milestone has no post.
           status: z.enum(['done', 'planned']).optional(),
         }),
