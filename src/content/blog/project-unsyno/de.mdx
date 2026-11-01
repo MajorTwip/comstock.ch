@@ -1,0 +1,110 @@
+---
+title: Projekt UnSyno
+date: 2026-11-01
+tags:
+  - IT
+  - Infrastructure
+authors:
+  - MajorTwip
+language: de
+summary: Schritt für Schritt ziehe ich alles von meinem Synology-NAS weg – DNS, Mail, Daten, Datenbanken und zum Schluss die Backups. Dieser Beitrag hält die Roadmap und die einzelnen Schritte fest.
+draft: false
+---
+
+import SkillTreeEmbed from '@/components/SkillTreeEmbed.astro';
+
+## Roadmap
+
+<SkillTreeEmbed project="weg-von-synology" lang="de" />
+
+### Schritte
+
+- **SSO für DLIT einrichten**
+  - [x] Account erstellen
+  - [x] Informieren
+- **Doku einrichten**
+  - [x] Outline-App installieren
+  - [x] SMTP in Outline einrichten
+  - [x] DLIT hinzufügen
+- **DNS migrieren**
+  - [x] Technitium DNS installieren
+  - [x] Benutzer hinzufügen (RBAC)
+  - [ ] Domains als Secondary hinzufügen
+  - [ ] Zu Primary hochstufen
+  - [ ] Verweise auf NS2 entfernen
+- **Mail migrieren**
+  - [x] Gmail-Enterprise-Mail einrichten
+  - [x] SMTP migrieren
+  - [x] Syno-Mailboxen sichern und aufräumen
+- **Daten migrieren**
+  - [ ] Externe Diskbay einrichten
+  - [ ] TrueNAS installieren
+  - [ ] Daten triagieren und auf den neuen Storage verschieben
+- **Datenbanken migrieren**
+  - [ ] Loki
+  - [ ] InfluxDB
+  - [ ] MySQL
+- [ ] **Neue(re) Syno zurücksetzen** – sobald DNS, Mail, Daten und Datenbanken runter sind
+- [ ] **Alte Backup-Syno abschalten**
+- **Backups von VB auf die neue Syno migrieren**
+  - [ ] Disks einbauen
+  - [ ] DSM installieren
+  - [ ] DSM an den IdP anbinden
+- **Backup-Lösung bei VB erneuern**
+  - [ ] Hardware bauen
+  - [ ] TrueNAS einrichten
+  - [ ] Tunnel einrichten
+  - [ ] Backup einrichten
+
+## Single Sign-On mit Authentik
+
+[Authentik als SSO und Security Gateway](/de/blog/authentik-sso/)
+
+## Saubere Dokumentation mit Outline
+
+### Wieso
+
+Dokumentation war ehrlich gesagt nie meine liebste Aufgabe und wurde entsprechend meistens vernachlässigt. Vor etwa zwei Jahren kam dann der Bedarf auf, meinen Fortschritt festzuhalten.
+Nach einigem Umschauen bin ich bei Obsidian gelandet. Mit seinem riesigen Angebot an Plugins und den neu eingeführten Bases wäre es nach wie vor mein klarer Favorit. Ich brauchte aber dringend eine Web-App, um auch auf Systemen an meine Notizen zu kommen, auf denen ich keine Apps installieren kann, und schon gar keine Synchronisation. Und um mit einem Kollegen und Mit-Hoster zusammenzuarbeiten, hat sich Outline als am besten geeignet erwiesen.
+
+### Die Basis-App starten
+
+Als ersten Schritt liess ich es einfach mal starten, indem ich in meinem Docker-Manager Arcane ein neues Projekt angelegt habe. Das mitgelieferte docker-compose.yml habe ich ein wenig angepasst:
+
+- den ganzen nginx-Block entfernt und folgende Labels ergänzt, damit Traefik routet:
+
+  ```yaml
+  labels:
+    - traefik.enable=true
+    - traefik.http.routers.doc.rule=Host("doc.comstock.ch")
+    - traefik.http.routers.doc.tls=true
+  ```
+- das Image `redis:8` auf `redis:8-alpine` und `postgres:18` auf `postgres:18-alpine` gewechselt
+
+In der mitgelieferten .env habe ich die URL korrigiert und `SECRET_KEY` sowie `UTILS_SECRET` gemäss der Beschreibung direkt über den Einträgen erzeugt.
+
+Outline bringt selbst keine Authentifizierung mit, und diese Entscheidung gefällt mir sehr. Ich verstehe aber, dass das für manche eine Hürde ist. Nur zum Testen habe ich eine Google-App erstellt, bin mir aber nicht sicher, ob das für Leute ohne Google Workspace ein gangbarer Weg ist.
+
+### Google SMTP in Outline einrichten
+
+Das war ziemlich einfach, nachdem ich herausgefunden hatte, dass das App-Passwort **ohne Leerzeichen** eingetragen werden muss!
+Ich bin einfach auf [https://myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords) gegangen und habe ein neues App-Passwort erstellt. Danach die .env angepasst:
+
+```ini
+SMTP_SERVICE=Gmail
+SMTP_USERNAME=meine-email@example.com
+SMTP_PASSWORD=dasapppasswortvonggl
+SMTP_FROM_EMAIL=Meine Doku <infra@example.com>
+```
+
+Auch wenn infra@example.com ein Alias meiner Google-Workspace-Adresse ist, wird zugestellt, aber mit der Absenderadresse "meine-email@example.com". Das "Meine Doku" hingegen kommt korrekt an. Wieso, weiss ich noch nicht.
+
+### Outline an Authentik anbinden
+
+Ich bin einfach der Anleitung auf [https://integrations.goauthentik.io/documentation/outline/](https://integrations.goauthentik.io/documentation/outline/) gefolgt, wobei der Teil **Create an email verification scope mapping in authentik** wegen eines defekten Links in der Doku etwas tricky war. Über die Suche in der Authentik-Doku findet man die benötigte Anleitung.
+
+Trotzdem hat es nie funktioniert… und die Logs waren auf den ersten Blick nicht sehr aufschlussreich. Dann hatte ich es: Ich nutze eine eigene Certificate Authority, die auf all meinen Geräten installiert ist. Aber nicht in den Docker-Containern!
+
+> [!WARNING]
+> Wer einen Identity Provider mit einem Zertifikat verwendet, das nicht von einer gängigen öffentlichen CA signiert ist, muss die eigene CA in den Container einbinden.
+> Neue Zeile in der .env: `NODE_EXTRA_CA_CERTS=/var/lib/outline/data/ca.crt`

@@ -1,0 +1,23 @@
+---
+// Renders one skill-tree project inside a post, e.g. in MDX:
+//   import SkillTreeEmbed from '@/components/SkillTreeEmbed.astro';
+//   <SkillTreeEmbed project="weg-von-synology" lang="de" />
+import { getEntry } from 'astro:content';
+import type { Lang } from '../i18n/ui';
+import { getPublishedSlugs } from '../lib/skills';
+import SkillTree from './SkillTree.astro';
+
+interface Props {
+  project: string;
+  lang: Lang;
+}
+
+const { project, lang } = Astro.props;
+const entry = await getEntry('skilltree', project);
+if (!entry) throw new Error(`SkillTreeEmbed: unknown skill tree "${project}"`);
+const published = await getPublishedSlugs();
+---
+
+<div class="not-prose my-8">
+  <SkillTree entry={entry} lang={lang} published={published} />
+</div>

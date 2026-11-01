@@ -1,0 +1,110 @@
+---
+title: Project UnSyno
+date: 2026-11-01
+tags:
+  - IT
+  - Infrastructure
+authors:
+  - MajorTwip
+language: en
+summary: Step by step I'm moving everything off my Synology NAS – DNS, mail, data, databases and finally the backups. This post tracks the roadmap and the individual steps.
+draft: false
+---
+
+import SkillTreeEmbed from '@/components/SkillTreeEmbed.astro';
+
+## Roadmap
+
+<SkillTreeEmbed project="weg-von-synology" lang="en" />
+
+### Steps
+
+- **Set up SSO for DLIT**
+  - [x] Create account
+  - [x] Inform
+- **Set up documentation**
+  - [x] Install Outline app
+  - [x] Set up SMTP in Outline
+  - [x] Add DLIT
+- **Migrate DNS**
+  - [x] Install Technitium DNS
+  - [x] Add users (RBAC)
+  - [ ] Add domains as secondary
+  - [ ] Promote to primary
+  - [ ] Remove references to NS2
+- **Migrate mail**
+  - [x] Set up Gmail Enterprise mail
+  - [x] Migrate SMTP
+  - [x] Back up and clean the Syno mailboxes
+- **Migrate data**
+  - [ ] Set up external disk bay
+  - [ ] Install TrueNAS
+  - [ ] Triage data to the new storage
+- **Migrate databases**
+  - [ ] Loki
+  - [ ] InfluxDB
+  - [ ] MySQL
+- [ ] **Reset the new(er) Syno** – once DNS, mail, data and databases are off it
+- [ ] **Disable the old backup Syno**
+- **Migrate backups from VB to the new Syno**
+  - [ ] Install disks
+  - [ ] Install DSM
+  - [ ] Join DSM to the IdP
+- **Update the backup solution based at VB**
+  - [ ] Build hardware
+  - [ ] Set up TrueNAS
+  - [ ] Set up tunnel
+  - [ ] Set up backup
+
+## Single sign-on with Authentik
+
+[Authentik as SSO and Security Gateway](/en/blog/authentik-sso/)
+
+## Setting up proper documentation in Outline
+
+### Reasoning
+
+To be honest, documentation never was my most loved task and therefore it was mostly neglected. Approximately two years ago I had the need to document my progress.
+After looking around I settled for Obsidian. With its vast offer of plugins and the newly implemented bases, it would still be my clear favourite. But I desperately needed a web app to be able to access my notes on systems where I can't install apps, and surely not some kind of synchronization. And to collaborate with a friend of mine and fellow hoster, Outline turned out to be most suitable.
+
+### Start the basic app
+
+As a first step I just let it start once by creating a new project in my Docker manager Arcane. I modified the provided docker-compose.yml a bit:
+
+- removed the whole nginx block and added the following labels to get it routed by Traefik:
+
+  ```yaml
+  labels:
+    - traefik.enable=true
+    - traefik.http.routers.doc.rule=Host("doc.comstock.ch")
+    - traefik.http.routers.doc.tls=true
+  ```
+- switched the image `redis:8` to `redis:8-alpine` and `postgres:18` to `postgres:18-alpine`
+
+In the provided .env I fixed the URL and created `SECRET_KEY` and `UTILS_SECRET` according to the description just above those entries.
+
+Outline does not provide auth itself and I really like this choice. But I understand the hurdle that creates for some people. Just to test I created a Google app, but I'm not sure if this is a viable path for people without Google Workspace.
+
+### Add Google SMTP to Outline
+
+This was rather easy after I discovered that I had to put in the app password **without spaces!**
+I just went to [https://myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords) and created a new app password. Then I modified the .env:
+
+```ini
+SMTP_SERVICE=Gmail
+SMTP_USERNAME=myemail@example.com
+SMTP_PASSWORD=theapppassfromggl
+SMTP_FROM_EMAIL=My Doc Name <infra@example.com>
+```
+
+Even though infra@example.com is an alias of my Google Workspace address, it gets delivered, but with the sender address "myemail@example.com". The "My Doc Name" on the other hand is sent correctly. Not yet sure why.
+
+### Add Outline to Authentik
+
+I just followed the guide on [https://integrations.goauthentik.io/documentation/outline/](https://integrations.goauthentik.io/documentation/outline/), whereas the part about **Create an email verification scope mapping in authentik** was a bit tricky due to a broken link in the docs. Using the search in the Authentik docs delivers the needed guide.
+
+Nonetheless it never worked… and the logs were at first sight not very clear. Then I got it: I use my own certificate authority, which is installed on all my devices. But not in the Docker containers!
+
+> [!WARNING]
+> When using an identity provider with a certificate not signed by a common public CA, you need to add the custom CA into the container.
+> New line in .env: `NODE_EXTRA_CA_CERTS=/var/lib/outline/data/ca.crt`
