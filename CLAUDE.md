@@ -1,7 +1,7 @@
 # comstock.ch
 
 Personal blog / knowledge store for **comstock.ch**. Bilingual (DE default, EN), static
-site generated with **Astro 5**. Migrated from a Next.js (Contentlayer + MDX) site in 2026.
+site generated with **Astro 7**. Migrated from a Next.js (Contentlayer + MDX) site in 2026.
 
 ## Commands
 
@@ -66,6 +66,10 @@ Frontmatter `image:` is the social/preview image (relative `./assets/...`). Do *
 
 ### Markdown pipeline (`astro.config.mjs`)
 
+Astro 7 defaults to the Sätteri processor, which can't run remark/rehype plugins, so the config sets
+`markdown.processor: unified({...})` from `@astrojs/markdown-remark` and passes the plugins there
+(the legacy top-level `markdown.remarkPlugins`/`rehypePlugins` keys are deprecated).
+
 remark: `remark-obsidian` (local), `remark-math`, GitHub alerts (`remark-github-blockquote-alert`).
 rehype: `rehype-slug`, `rehype-autolink-headings`, `rehype-katex`. Code highlighting is Shiki
 (built in; light/dark themes follow the `.dark` class).
@@ -110,8 +114,10 @@ and pushes to `ghcr.io` on every push (unchanged from the previous infra).
 
 ## Notes / known specifics
 
-- Pinned to **Astro 5** intentionally: Astro 6's rolldown-based Vite is incompatible with
-  `@tailwindcss/vite` (`Missing field tsconfigPaths`). Revisit when that's resolved upstream.
+- **Astro 7** (Vite 8 / rolldown). Needs **Node ≥ 22.23.4** (`engines`, `.nvmrc` = 24; Docker
+  uses `node:24-alpine`). Older Node fails at startup with "Node.js vX is not supported by Astro!".
+- Astro 7's compiler drops whitespace between tags across line breaks; if inline elements must be
+  separated by a space, write `{' '}` explicitly.
 - The migration script (`scripts/migrate.mjs`) is one-time and reads from a sibling checkout of
   the old repo at `C:/Projects/_comstock_old`. It dropped 4 image references that were already
   broken in the source. Tags and the projects page were intentionally not migrated.

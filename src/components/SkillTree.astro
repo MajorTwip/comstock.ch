@@ -59,9 +59,9 @@ const CARD_W = 140;
           const style = `left:${n.x}px;top:${n.y}px;width:${CARD_W}px;`;
           const body = (
             <>
-              <span class="skill-icon" aria-hidden="true">{icon}</span>
+              <span class="skill-icon" aria-hidden="true">{icon}</span>{' '}
               <span class="skill-label">{n.title}</span>
-              {n.desc && <span class="skill-desc">{n.desc}</span>}
+              {n.desc && <>{' '}<span class="skill-desc">{n.desc}</span></>}
             </>
           );
           return n.state === 'done' && n.href ? (
