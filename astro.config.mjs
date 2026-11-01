@@ -4,6 +4,7 @@ import mdx from '@astrojs/mdx';
 import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
+import { unified } from '@astrojs/markdown-remark';
 
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -30,12 +31,15 @@ export default defineConfig({
   },
   integrations: [mdx(), react(), sitemap({ i18n: { defaultLocale: 'de', locales: { de: 'de', en: 'en' } } })],
   markdown: {
-    remarkPlugins: [remarkObsidian, remarkMath, remarkAlert],
-    rehypePlugins: [
-      rehypeSlug,
-      [rehypeAutolinkHeadings, { behavior: 'prepend', properties: { className: ['content-header-link'] } }],
-      rehypeKatex,
-    ],
+    // Astro 7 defaults to Sätteri; our remark/rehype plugins need the unified processor.
+    processor: unified({
+      remarkPlugins: [remarkObsidian, remarkMath, remarkAlert],
+      rehypePlugins: [
+        rehypeSlug,
+        [rehypeAutolinkHeadings, { behavior: 'prepend', properties: { className: ['content-header-link'] } }],
+        rehypeKatex,
+      ],
+    }),
     // Shiki is built in; replaces rehype-prism-plus.
     shikiConfig: {
       themes: { light: 'github-light', dark: 'github-dark' },
