@@ -16,8 +16,10 @@ nodes:
     requires: []
   - id: databases
     title: { de: "Datenbanken migrieren", en: "Migrate databases" }
-    desc: { de: "Loki, InfluxDB, MySQL", en: "Loki, InfluxDB, MySQL" }
+    desc: { de: "Loki, InfluxDB, MariaDB", en: "Loki, InfluxDB, MariaDB" }
     requires: []
+    post: project-unsyno
+    anchor: { de: datenbanken-migrieren, en: migrating-the-databases }
   - id: old-backup
     title: { de: "Alte Backup-Syno abschalten", en: "Disable old backup Syno" }
     requires: []

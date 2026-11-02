@@ -42,9 +42,11 @@ import SkillTreeEmbed from '@/components/SkillTreeEmbed.astro';
   - [ ] Install TrueNAS
   - [ ] Triage data to the new storage
 - **Migrate databases**
-  - [ ] Loki
-  - [ ] InfluxDB
-  - [ ] MySQL
+  - [x] Back up InfluxDB
+  - [ ] Set up InfluxDB again on the Docker host
+  - [x] Loki/Alloy – deliberately not migrated
+  - [ ] Set up Loki/Alloy fresh on the Docker host
+  - [x] Split MariaDB into one container per stack
 - [ ] **Reset the new(er) Syno** – once DNS, mail, data and databases are off it
 - [ ] **Disable the old backup Syno**
 - **Migrate backups from VB to the new Syno**
@@ -64,3 +66,39 @@ import SkillTreeEmbed from '@/components/SkillTreeEmbed.astro';
 ## Setting up proper documentation in Outline
 
 [Outline – Documentation in the Browser](/en/blog/outline-dokumentation/)
+
+## Migrating the databases
+
+Three kinds of databases were running on the Syno: an [InfluxDB](https://www.influxdata.com/products/influxdb/), [Loki](https://grafana.com/oss/loki/) with [Alloy](https://grafana.com/docs/alloy/latest/) for the logs, and a MariaDB. The target for all of them is the general Docker host. Nice and simple, no high availability and the like, I just don't need that at home.
+
+### InfluxDB
+
+InfluxDB was already running in Docker. I backed up the databases, but haven't set it up again yet. That happens once it gets its new home on the Docker host. Unlike the logs, I do want to analyse this data in the long run.
+
+### Loki and Alloy
+
+I didn't migrate Loki and Alloy at all. I don't need any old logs, so both will simply be set up fresh on the Docker host. They will keep running in memory only, as I don't plan any long-term log analysis for now. Their main job is collecting logs and serving as a source for [CrowdSec](https://www.crowdsec.net/).
+
+> [!WARNING]
+> If the Loki logging driver is installed in Docker and sends logs to Loki in **blocking** mode (the default), everything hangs once Loki goes down: containers won't start, can't even be stopped, and the rest stalls too. Make sure to switch to **non-blocking**, e.g. in `/etc/docker/daemon.json`:
+>
+> ```json
+> {
+>   "log-driver": "loki",
+>   "log-opts": {
+>     "loki-url": "http://loki.example.com:3100/loki/api/v1/push",
+>     "mode": "non-blocking",
+>     "max-buffer-size": "4m"
+>   }
+> }
+> ```
+>
+> If Loki is gone and the buffer is full, logs get dropped instead. I can live with that, a hanging Docker host not so much.
+
+### MariaDB
+
+MariaDB was running as the Synology package [MariaDB 10](https://www.synology.com/en-global/dsm/packages/MariaDB10). The actual data lives in `/var/packages/MariaDB10/target/mysql`, which points to the package directory on the volume (`/volume1/@appstore/MariaDB10/...`). If in doubt, `SELECT @@datadir;` inside MariaDB tells you.
+
+I copied that folder to the Docker host and then seeded **a dedicated MariaDB container for every stack that needs SQL**. In each container I then dropped the databases that particular stack doesn't need.
+
+That's a bit less efficient than one central instance, but it lets me copy, back up and restore every stack en bloc without any other stack noticing.

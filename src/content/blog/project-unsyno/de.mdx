@@ -42,9 +42,11 @@ import SkillTreeEmbed from '@/components/SkillTreeEmbed.astro';
   - [ ] TrueNAS installieren
   - [ ] Daten triagieren und auf den neuen Storage verschieben
 - **Datenbanken migrieren**
-  - [ ] Loki
-  - [ ] InfluxDB
-  - [ ] MySQL
+  - [x] InfluxDB sichern
+  - [ ] InfluxDB auf dem Docker-Host neu einrichten
+  - [x] Loki/Alloy – bewusst nicht migriert
+  - [ ] Loki/Alloy auf dem Docker-Host neu aufsetzen
+  - [x] MariaDB in einzelne Container pro Stack aufteilen
 - [ ] **Neue(re) Syno zurücksetzen** – sobald DNS, Mail, Daten und Datenbanken runter sind
 - [ ] **Alte Backup-Syno abschalten**
 - **Backups von VB auf die neue Syno migrieren**
@@ -64,3 +66,39 @@ import SkillTreeEmbed from '@/components/SkillTreeEmbed.astro';
 ## Saubere Dokumentation mit Outline
 
 [Outline – Dokumentation im Browser](/de/blog/outline-dokumentation/)
+
+## Datenbanken migrieren
+
+Auf der Syno liefen drei Sorten Datenbanken: eine [InfluxDB](https://www.influxdata.com/products/influxdb/), [Loki](https://grafana.com/oss/loki/) mit [Alloy](https://grafana.com/docs/alloy/latest/) für die Logs und eine MariaDB. Ziel für alle ist der allgemeine Docker-Host. Schön gemütlich, ohne High Availability und Co., das brauche ich zu Hause schlicht nicht.
+
+### InfluxDB
+
+InfluxDB lief bis anhin schon in Docker. Die Datenbanken habe ich gesichert, neu eingerichtet ist sie aber noch nicht. Das kommt, sobald sie auf dem Docker-Host ein neues Zuhause bekommt. Anders als bei den Logs will ich diese Daten nämlich auch langfristig auswerten.
+
+### Loki und Alloy
+
+Loki und Alloy habe ich gar nicht migriert. Alte Logs brauche ich keine, also werden die beiden auf dem Docker-Host einfach frisch aufgesetzt. Sie laufen auch künftig nur in Memory, eine langfristige Auswertung der Logs plane ich aktuell nicht. Ihr Job ist primär das Einsammeln der Logs und als Quelle für [CrowdSec](https://www.crowdsec.net/) zu dienen.
+
+> [!WARNING]
+> Wenn der Loki-Logging-Driver in Docker installiert ist und die Logs **blocking** an Loki sendet (das ist der Standard), hängt beim Abschalten von Loki alles: Container starten nicht mehr, lassen sich nicht einmal mehr stoppen, und auch der Rest steht. Unbedingt auf **non-blocking** umstellen, z. B. in der `/etc/docker/daemon.json`:
+>
+> ```json
+> {
+>   "log-driver": "loki",
+>   "log-opts": {
+>     "loki-url": "http://loki.example.com:3100/loki/api/v1/push",
+>     "mode": "non-blocking",
+>     "max-buffer-size": "4m"
+>   }
+> }
+> ```
+>
+> Ist Loki weg und der Buffer voll, gehen dafür Logs verloren. Damit kann ich leben, mit einem hängenden Docker-Host eher nicht.
+
+### MariaDB
+
+Die MariaDB lief als Synology-Paket [MariaDB 10](https://www.synology.com/de-de/dsm/packages/MariaDB10). Die eigentlichen Daten liegen unter `/var/packages/MariaDB10/target/mysql`, was auf das Paketverzeichnis auf dem Volume zeigt (`/volume1/@appstore/MariaDB10/...`). Wer sich nicht sicher ist: `SELECT @@datadir;` in der MariaDB verrät es.
+
+Diesen Ordner habe ich auf den Docker-Host kopiert und dann für **jeden Stack, der SQL braucht, einen eigenen MariaDB-Container** damit bestückt. In jedem Container habe ich anschliessend die Datenbanken gelöscht, die der jeweilige Stack nicht braucht.
+
+Das ist zwar ein wenig weniger effizient als eine zentrale Instanz, dafür kann ich jeden Stack en bloc kopieren, sichern und auch wiederherstellen, ohne dass ein anderer Stack etwas davon merkt.
