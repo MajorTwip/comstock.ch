@@ -14,19 +14,21 @@ nodes:
     title: { de: "Daten migrieren", en: "Migrate data" }
     desc: { de: "Diskbay + TrueNAS", en: "Disk bay + TrueNAS" }
     requires: []
+    status: done
   - id: databases
     title: { de: "Datenbanken migrieren", en: "Migrate databases" }
     desc: { de: "Loki, InfluxDB, MariaDB", en: "Loki, InfluxDB, MariaDB" }
     requires: []
     post: project-unsyno
     anchor: { de: datenbanken-migrieren, en: migrating-the-databases }
-  - id: old-backup
-    title: { de: "Alte Backup-Syno abschalten", en: "Disable old backup Syno" }
-    requires: []
   - id: sso
     title: { de: "SSO mit Authentik", en: "SSO with Authentik" }
     requires: []
     post: authentik-sso
+  - id: old-backup
+    title: { de: "Alte Backup-Syno abschalten", en: "Disable old backup Syno" }
+    requires: []
+    status: done
   - id: sso-dlit
     title: { de: "SSO für DLIT", en: "SSO for DLIT" }
     requires: [sso]
@@ -42,6 +44,7 @@ nodes:
   - id: reset-syno
     title: { de: "Neuere Syno zurücksetzen", en: "Reset newer Syno" }
     requires: [dns, mail, data, databases]
+    status: done
   - id: backup-syno
     title: { de: "Backups auf neue Syno", en: "Backups to new Syno" }
     desc: { de: "DSM am IdP", en: "DSM joined to IdP" }
@@ -49,7 +52,7 @@ nodes:
   - id: backup
     title: { de: "Backup-Lösung bei VB", en: "Backup solution at VB" }
     desc: { de: "TrueNAS + Tunnel", en: "TrueNAS + tunnel" }
-    requires: [backup-syno]
+    requires: [backup-syno, reset-syno]
   - id: decommission
     title: { de: "Synology abgeschaltet", en: "Synology retired" }
     desc: { de: "Ziel", en: "Goal" }
