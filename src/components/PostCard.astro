@@ -1,7 +1,7 @@
 ---
 import { Image } from 'astro:assets';
 import type { Post } from '../lib/posts';
-import { postSlug } from '../lib/posts';
+import { postSlug, tagHref } from '../lib/posts';
 import { formatDate } from '../i18n/utils';
 import type { Lang } from '../i18n/ui';
 
@@ -36,7 +36,7 @@ const href = `/${lang}/blog/${slug}/`;
     {
       post.data.tags.length > 0 && (
         <ul class="mt-1 flex flex-wrap gap-2 text-xs text-[var(--fg-muted)]">
-          {post.data.tags.map((tag) => <li class="rounded bg-[var(--chip)] px-2 py-0.5">#{tag}</li>)}
+          {post.data.tags.map((tag) => <li><a href={tagHref(tag, lang)} class="block rounded bg-[var(--chip)] px-2 py-0.5 hover:text-[var(--brand)]">#{tag}</a></li>)}
         </ul>
       )
     }

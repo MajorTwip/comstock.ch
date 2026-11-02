@@ -137,5 +137,12 @@ and pushes to `ghcr.io` on every push (unchanged from the previous infra).
   separated by a space, write `{' '}` explicitly.
 - The migration script (`scripts/migrate.mjs`) is one-time and reads from a sibling checkout of
   the old repo at `C:/Projects/_comstock_old`. It dropped 4 image references that were already
-  broken in the source. Tags and the projects page were intentionally not migrated.
-- Excluded by request (for now): tag pages, projects page.
+  broken in the source. The projects page was intentionally not migrated.
+- Excluded by request (for now): projects page, tag overview/index page.
+
+### Tags
+
+Tag chips (post cards + post header) link to `/[lang]/tags/<tag>/` (`src/pages/[lang]/tags/[tag].astro`).
+Tag slugs are case-insensitive (`tagSlug` in `src/lib/posts.ts`: `IT` and `it` share one page). Tags are
+often translated (drohne/drone), so every slug gets a page in **both** languages (empty-state message if
+none match) so the language switcher never 404s.

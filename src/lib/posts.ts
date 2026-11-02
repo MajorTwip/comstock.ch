@@ -26,3 +26,21 @@ export async function getPost(slug: string, lang: Lang): Promise<Post | undefine
 export async function hasTranslation(slug: string, lang: Lang): Promise<boolean> {
   return Boolean(await getPost(slug, lang));
 }
+
+/** URL-safe tag key — case-insensitive, so "IT" and "it" share one page. */
+export function tagSlug(tag: string): string {
+  return tag.trim().toLowerCase().replace(/\s+/g, '-');
+}
+
+export function tagHref(tag: string, lang: Lang): string {
+  return `/${lang}/tags/${tagSlug(tag)}/`;
+}
+
+/**
+ * Tag slugs across both languages. Tags are often translated (drohne/drone), so every
+ * slug gets a page in each language — the language switcher then never hits a 404.
+ */
+export async function getAllTagSlugs(): Promise<string[]> {
+  const all = await getCollection('blog', isPublished);
+  return [...new Set(all.flatMap((e) => e.data.tags.map(tagSlug)))].sort();
+}

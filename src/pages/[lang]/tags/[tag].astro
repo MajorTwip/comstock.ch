@@ -1,0 +1,36 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import PostCard from '../../../components/PostCard.astro';
+import { getPosts, getAllTagSlugs, tagSlug } from '../../../lib/posts';
+import { useTranslations } from '../../../i18n/utils';
+import type { Lang } from '../../../i18n/ui';
+
+export async function getStaticPaths() {
+  const tags = await getAllTagSlugs();
+  return (['de', 'en'] as const).flatMap((lang) => tags.map((tag) => ({ params: { lang, tag } })));
+}
+
+const lang = Astro.params.lang as Lang;
+const tag = Astro.params.tag as string;
+const t = useTranslations(lang);
+const posts = (await getPosts(lang)).filter((p) => p.data.tags.some((x) => tagSlug(x) === tag));
+// Show the tag as authored in this language, if any post uses it.
+const label = posts[0]?.data.tags.find((x) => tagSlug(x) === tag) ?? tag;
+---
+
+<BaseLayout title={`#${label} · COMSTOCK`} description={`${t('tags.title')} #${label}`}>
+  <section class="mb-10">
+    <p class="text-sm font-semibold uppercase tracking-wide text-[var(--fg-muted)]">{t('tags.title')}</p>
+    <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">#{label}</h1>
+  </section>
+
+  {
+    posts.length > 0 ? (
+      <div>{posts.map((post) => <PostCard post={post} lang={lang} />)}</div>
+    ) : (
+      <p class="text-[var(--fg-muted)]">{t('tags.empty')}</p>
+    )
+  }
+
+  <a href={`/${lang}/`} class="mt-8 inline-block text-sm text-[var(--brand)] hover:underline">← {t('post.allPosts')}</a>
+</BaseLayout>
