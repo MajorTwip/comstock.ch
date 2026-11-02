@@ -5,14 +5,6 @@ goal:
   de: "Den eigenen Homelab-Stack vollständig ohne Synology betreiben."
   en: "Run the whole homelab stack without any Synology dependency."
 nodes:
-  - id: storage
-    title: { de: "NetApp-Storage", en: "NetApp storage" }
-    requires: []
-    post: clusterrettung-nach-powerout
-  - id: energy
-    title: { de: "Energieübersicht", en: "Energy overview" }
-    requires: []
-    post: powermap
   - id: mail
     title: { de: "Mail migrieren", en: "Migrate mail" }
     desc: { de: "Gmail / Workspace", en: "Gmail / Workspace" }
@@ -31,7 +23,7 @@ nodes:
     requires: []
   - id: sso
     title: { de: "SSO mit Authentik", en: "SSO with Authentik" }
-    requires: [storage]
+    requires: []
     post: authentik-sso
   - id: sso-dlit
     title: { de: "SSO für DLIT", en: "SSO for DLIT" }
@@ -55,11 +47,11 @@ nodes:
   - id: backup
     title: { de: "Backup-Lösung bei VB", en: "Backup solution at VB" }
     desc: { de: "TrueNAS + Tunnel", en: "TrueNAS + tunnel" }
-    requires: [storage, backup-syno]
+    requires: [backup-syno]
   - id: decommission
     title: { de: "Synology abgeschaltet", en: "Synology retired" }
     desc: { de: "Ziel", en: "Goal" }
-    requires: [energy, backup]
+    requires: [backup]
 ---
 
 Schritt für Schritt raus aus der Synology-Abhängigkeit.
